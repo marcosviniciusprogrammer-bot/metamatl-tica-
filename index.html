@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Metamatlética — Jogo da Memória v3.10</title>
+  <title>Metamatlética — Jogo da Memória v3.12</title>
   <style>
     :root{
       --bg: #060917; --bg2:#0a1030; --panel:#0c1331; --card:#0e163c;
@@ -84,8 +84,10 @@
     .overlay{ position:fixed; inset:0; display:none; align-items:center; justify-content:center;
       backdrop-filter: blur(10px); background: rgba(6,10,24,.6) }
     .overlay.show{ display:flex }
-    .win-card{ background:#0f162b; border:1px solid #2a355a; padding:28px; border-radius:20px; text-align:center; max-width:560px; box-shadow:var(--shadow) }
+    .win-card{ background:#0f162b; border:1px solid #2a355a; padding:28px; border-radius:20px; text-align:center; max-width:640px; box-shadow:var(--shadow) }
     .win-card h2{ margin:10px 0 } .win-card p{ margin:6px 0; color:var(--muted) }
+    .win-title{ display:flex; align-items:center; justify-content:center; gap:10px; font-size:clamp(26px,4.5vw,36px); font-weight:800; letter-spacing:.3px }
+    .crown{ font-size:1.2em; filter: drop-shadow(0 4px 8px rgba(0,0,0,.35)); }
 
     /* About */
     .about h3{ margin:14px 0 6px } .about p{ color:var(--muted); margin:6px 0 }
@@ -99,7 +101,7 @@
         <h1>Metamatlética — <span class="muted">Jogo da Memória</span></h1>
         <div class="muted">Pensamento Computacional e Design de Jogos</div>
       </div>
-      <div class="tag">v3.10</div>
+      <div class="tag">v3.12</div>
     </header>
 
     <!-- LOBBY -->
@@ -194,8 +196,13 @@
     <!-- WIN -->
     <div class="overlay" id="overlayWin" aria-hidden="true">
       <div class="win-card">
-        <h2>Parabéns, você venceu! 👑</h2>
-        <p id="winStats" class="muted"></p>
+        <h2 class="win-title"><span class="crown">👑</span> Você venceu! <span class="crown">👑</span></h2>
+        <div class="row" style="justify-content:center; gap:10px; margin:10px 0 6px">
+          <div class="stat">⏱️ <b id="wTime">00:00</b></div>
+          <div class="stat">✅ <b id="wPairs">0</b> pares</div>
+          <div class="stat">🎯 <b id="wMoves">0</b> jogadas</div>
+        </div>
+        <p class="muted" style="margin-top:6px">Parabéns pelo desempenho! Continue jogando 😉</p>
         <div style="margin-top:10px">
           <button class="btn primary" id="btnPlayAgain">Jogar de novo</button>
           <button class="btn" id="btnBackFromWin">← Voltar ao Lobby</button>
@@ -238,7 +245,7 @@
     return shuffle([...items, ...items]).map((x,i)=>({id:i,key:x.v,t:x.t,matched:false}));
   }
 
-  // state
+  // state / screens
   const screens = { lobby: $('#screen-lobby'), game: $('#screen-game'), about: $('#screen-about') };
   function go(to){ Object.values(screens).forEach(s=>s.classList.remove('active')); screens[to].classList.add('active') }
   let G=null, timer=null, previewTimer=null, countdownTimer=null;
@@ -250,10 +257,13 @@
     buildBoard();
     startTimer();
     go('game');
-    const previewAlways = localStorage.getItem(PV_KEY)==='true';
-    if(previewAlways){ startPreview(10); }
-    else if(localStorage.getItem(FP_KEY)==='true'){ startPreview(10); }
-    else { $('#hint').textContent='Escolha uma carta'; }
+
+    // PRÉVIA: só se o checkbox estiver marcado
+    if($('#cbPreview').checked){
+      startPreview(10);
+    }else{
+      $('#hint').textContent='Escolha uma carta';
+    }
   }
 
   function buildBoard(){
@@ -309,18 +319,30 @@
 
   function win(){
     stopTimer(); AudioFX.victory();
+
+    // Primeira vez: sem modal (mantido)
     const isFirstPlay = localStorage.getItem(FP_KEY)==='true';
     if(isFirstPlay){
       localStorage.setItem(FP_KEY,'false');
       setTimeout(()=>{ go('lobby'); AudioFX.startLobby(); }, 500);
       return;
     }
-    $('#winStats').textContent = `Tempo: ${fmtTime(G.sec)} • Jogadas: ${G.moves} • Pares: ${G.pairs}`;
-    $('#overlayWin').classList.add('show'); $('#overlayWin').setAttribute('aria-hidden','false');
+
+    // Estatísticas na vitória
+    $('#wTime').textContent  = fmtTime(G.sec);
+    $('#wMoves').textContent = G.moves;
+    $('#wPairs').textContent = G.pairs;
+
+    $('#overlayWin').classList.add('show');
+    $('#overlayWin').setAttribute('aria-hidden','false');
   }
 
   // events
-  $('#btnPlay').onclick = ()=>{ try{ if(!AudioFX.inited){ AudioFX.init(); AudioFX.ctx.resume(); } }catch(_){ } AudioFX.stopLobby(); newGame(+$('#deckSize').value, $('#theme').value); };
+  $('#btnPlay').onclick = ()=>{
+    try{ if(!AudioFX.inited){ AudioFX.init(); AudioFX.ctx.resume(); } }catch(_){}
+    AudioFX.stopLobby();
+    newGame(+$('#deckSize').value, $('#theme').value);
+  };
   $('#btnRestart').onclick = ()=>{ if(G){ clearPreviewTimers(); newGame(G.size, G.theme) } };
   $('#btnBackInGame').onclick = ()=>{ stopTimer(); clearPreviewTimers(); go('lobby'); AudioFX.startLobby(); };
   $('#btnBackFromWin').onclick = ()=>{ $('#overlayWin').classList.remove('show'); go('lobby'); AudioFX.startLobby(); };
