@@ -6,14 +6,13 @@
   <title>Metamatlética — Jogo da Memória v3.12</title>
   <style>
     :root{
-      --bg: #060917; --bg2:#0a1030; --panel:#0c1331; --card:#0e163c;
+      --bg:#060917; --bg2:#0a1030; --panel:#0c1331; --card:#0e163c;
       --muted:#a7b0c7; --text:#f2f6ff; --accent:#7aa2ff;
       --radius:24px; --shadow:0 18px 50px rgba(0,0,0,.55)
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    *{box-sizing:border-box} html,body{height:100%}
     body{
-      margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
       background:
         radial-gradient(1000px 700px at 5% -10%, #20307a55, transparent),
         radial-gradient(900px 700px at 110% -10%, #0f1f6a66, transparent),
@@ -21,17 +20,9 @@
       color:var(--text); display:flex; align-items:center; justify-content:center; padding:22px
     }
     .app{ width:min(1150px,100%)}
-
-    /* —— cards de vidro com animações mais modernas —— */
-    .glass{
-      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+    .glass{ background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
       border:1px solid rgba(255,255,255,.15); backdrop-filter: blur(12px);
-      border-radius:var(--radius); box-shadow:var(--shadow);
-      animation: fadeIn .7s ease, floatUp .9s cubic-bezier(.2,.8,.2,1)
-    }
-    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-    @keyframes floatUp{from{transform:translateY(16px)}to{transform:translateY(0)}}
-
+      border-radius:var(--radius); box-shadow:var(--shadow) }
     .wrap{ padding:20px }
     header{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:14px }
     h1{ margin:0; font-size:clamp(24px,5vw,44px); letter-spacing:.4px; text-shadow:0 0 10px rgba(122,162,255,.6)}
@@ -40,59 +31,52 @@
     .muted{ color:var(--muted) }
     .row{ display:flex; gap:14px; flex-wrap:wrap; align-items:center }
     .col{ flex:1 1 280px }
-
-    /* —— botões com micro animações —— */
-    .btn{
-      background:rgba(20,28,80,.85); border:1px solid #2a3a7a; color:var(--text);
+    .btn{ background:rgba(20,28,80,.85); border:1px solid #2a3a7a; color:var(--text);
       padding:14px 16px; border-radius:16px; font-weight:800; letter-spacing:.3px; cursor:pointer;
-      transition: transform .16s ease, box-shadow .16s ease, filter .2s ease
-    }
-    .btn:hover{ transform:translateY(-2px) scale(1.02); box-shadow:0 12px 28px rgba(90,130,255,.35) }
+      transition:.2s transform ease,.2s box-shadow ease }
+    .btn:hover{ transform:translateY(-2px); box-shadow:0 12px 28px rgba(90,130,255,.35) }
     .btn:active{ transform:translateY(0) scale(.97) }
-    .btn.primary{
-      background:linear-gradient(180deg, #9ec2ff, #5b86ff); color:#0a0f1e; border:none;
-      box-shadow:0 0 16px rgba(91,134,255,.7)
-    }
+    .btn.primary{ background:linear-gradient(180deg, #9ec2ff, #5b86ff); color:#0a0f1e; border:none }
     .btn.ghost{ background:rgba(15,25,60,.65) }
-    select{ width:100%; background:#0d163d; color:#fff; border:1px solid #2a355a;
-      padding:12px 14px; border-radius:14px; font-weight:700 }
+    select{ width:100%; background:#0d163d; color:#e9eeff; border:1px solid #2a355a;
+      padding:12px 14px; border-radius:14px; font-weight:700; appearance:none;
+      background-image:linear-gradient(45deg,transparent 50%,#9ec2ff 50%),
+                       linear-gradient(135deg,#9ec2ff 50%,transparent 50%),
+                       linear-gradient(#0d163d,#0d163d);
+      background-position:calc(100% - 18px) calc(1em + 2px),calc(100% - 13px) calc(1em + 2px),100% 0;
+      background-size:5px 5px,5px 5px,2.8em 2.8em; background-repeat:no-repeat}
     label{ display:block; font-size:15px; color:var(--muted); margin:4px 2px 8px }
     .screen{ display:none } .screen.active{ display:block }
 
-    /* —— Lobby responsivo renovado —— */
+    /* Lobby */
     .hero{ display:grid; grid-template-columns: 1.2fr 1fr; gap:20px; align-items:stretch }
     .brand{
-      padding:26px; border-radius:22px; position:relative; overflow:hidden;
-      background:
-        radial-gradient(120% 120% at -10% -20%, rgba(122,162,255,.25), transparent),
-        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      padding:26px; border-radius:22px;
+      background: radial-gradient(120% 120% at -10% -20%, rgba(122,162,255,.25), transparent),
+                  linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
       border:1px solid rgba(255,255,255,.15);
       box-shadow: 0 30px 60px rgba(12,20,56,.45), inset 0 0 40px rgba(122,162,255,.15);
-      animation: cardPop .6s ease
     }
-    @keyframes cardPop{from{transform:scale(.98); opacity:.8}to{transform:scale(1); opacity:1}}
     .brand h2{ margin:0 0 6px; font-size:clamp(22px,4vw,36px) }
     .brand p{ margin:0; color:var(--muted) }
-    .settings{
-      padding:20px; border-radius:22px;
-      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
-      border:1px solid rgba(255,255,255,.15);
-      animation: cardPop .65s ease .04s both
-    }
+    .settings{ padding:20px; border-radius:22px; background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04)); border:1px solid rgba(255,255,255,.15) }
     .chk{ display:flex; align-items:center; gap:10px; margin-top:12px; color:var(--muted); font-weight:700 }
-    .chk input{ width:18px; height:18px }
+    .chk input{ appearance:none;width:20px;height:20px;border-radius:6px;border:2px solid #4a6aff;background:#0d163d;display:inline-grid;place-content:center;cursor:pointer }
+    .chk input:after{content:"";width:10px;height:10px;border-radius:3px;background:#dfe8ff;transform:scale(0);transition:.15s}
+    .chk input:checked{background:#4a6aff}.chk input:checked:after{transform:scale(1)}
 
-    /* mobile: pilha */
-    @media (max-width: 780px){
-      .hero{ grid-template-columns: 1fr; }
-    }
+    /* Volume */
+    .vol{display:flex;align-items:center;gap:10px}
+    .slider{appearance:none;width:160px;height:8px;background:#2a3a7a;border-radius:999px;outline:none}
+    .slider::-webkit-slider-thumb{appearance:none;width:18px;height:18px;background:#7aa2ff;border-radius:50%;box-shadow:0 0 6px #7aa2ff;cursor:pointer}
 
     /* Board & cards */
     .board{ display:grid; gap:14px; padding:16px; border-radius:var(--radius);
       border:1px solid rgba(255,255,255,.12); background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
       box-shadow:var(--shadow) }
     .cols-5{ grid-template-columns:repeat(5, 1fr)} .cols-6{ grid-template-columns:repeat(6, 1fr)}
-    .gbar{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-bottom:12px }
+    .gbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-bottom:12px }
+    .leftHUD,.rightHUD{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .stat{ background:rgba(12,20,56,.65); border:1px solid #243056; padding:10px 12px; border-radius:12px; font-size:14px }
     .tile{ position:relative; aspect-ratio:3/4; border:none; border-radius:20px; overflow:hidden; cursor:pointer;
       perspective:1000px; outline:none; box-shadow:0 10px 22px rgba(0,0,0,.4) }
@@ -102,21 +86,17 @@
     .face.front{ background:radial-gradient(120% 120% at 20% 0%, #1d2a63, #101944 70%); border:1px solid #2f3e89 }
     .face.back{ transform:rotateY(180deg); border:1px solid rgba(255,255,255,.25);
       background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04)) }
-    .dot{ width:60%; height:60%; border-radius:18px; box-shadow: inset 0 0 0 4px rgba(255,255,255,.22)}
     .emoji{ font-size: clamp(30px, 7vw, 54px) }
-    .hint{ margin:8px 0 12px; color:#d6deff; font-weight:700; letter-spacing:.2px; text-shadow:0 0 6px rgba(122,162,255,.5) }
+    .hint{ margin:8px 0 12px; color:#d6deff; font-weight:800; letter-spacing:.2px; text-shadow:0 0 6px rgba(122,162,255,.5) }
 
     .overlay{ position:fixed; inset:0; display:none; align-items:center; justify-content:center;
       backdrop-filter: blur(10px); background: rgba(6,10,24,.6) }
     .overlay.show{ display:flex }
     .win-card{ background:#0f162b; border:1px solid #2a355a; padding:28px; border-radius:20px; text-align:center; max-width:640px; box-shadow:var(--shadow) }
-    .win-card h2{ margin:10px 0 } .win-card p{ margin:6px 0; color:var(--muted) }
-    .win-title{ display:flex; align-items:center; justify-content:center; gap:10px; font-size:clamp(26px,4.5vw,36px); font-weight:800; letter-spacing:.3px }
+    .win-title{ display:flex; align-items:center; justify-content:center; gap:10px; font-size:clamp(26px,4.5vw,36px); font-weight:800 }
     .crown{ font-size:1.2em; filter: drop-shadow(0 4px 8px rgba(0,0,0,.35)); }
 
-    /* About */
-    .about h3{ margin:14px 0 6px } .about p{ color:var(--muted); margin:6px 0 }
-    .about ul{ margin:6px 0 12px 18px } .about li{ margin:6px 0 }
+    @media (max-width:740px){ .hero{grid-template-columns:1fr} .slider{width:100%} }
   </style>
 </head>
 <body>
@@ -157,10 +137,13 @@
                 </select>
               </div>
             </div>
-            <label class="chk"><input type="checkbox" id="cbPreview"> Mostrar prévia de 5s antes de começar</label>
-            <div class="row" style="margin-top:12px">
+
+            <label class="chk"><input type="checkbox" id="cbPreview" checked> Mostrar prévia de 5s antes de começar</label>
+
+            <div class="row" style="margin-top:12px;align-items:center">
               <button id="btnPlay" class="btn primary">🚀 Jogar</button>
               <button id="btnToggleSound" class="btn">🔈 Som: ON</button>
+              <div class="vol"><span>🔊</span><input id="volumeSlider" class="slider" type="range" min="0" max="100" value="70"></div>
             </div>
           </div>
         </div>
@@ -169,8 +152,7 @@
 
     <!-- ABOUT -->
     <section id="screen-about" class="screen">
-      <div class="wrap glass about">
-        <!-- REMOVIDO o botão de voltar de cima -->
+      <div class="wrap glass">
         <h3>Pensamento Computacional</h3>
         <ul>
           <li><b>Decomposição:</b> lobby, tabuleiro, turnos, vitória.</li>
@@ -190,12 +172,10 @@
         <ul>
           <li><b>Contagem & Probabilidade:</b> chance de achar um par considerando cartas reveladas.</li>
           <li><b>Aritmética:</b> jogadas, pares, tempo e taxa de acertos.</li>
-          <li><b>Complexidade:</b> custo do shuffle e da checagem (O(n)).</li>
-          <li><b>Geometria/Matrizes:</b> grade 5×4 ou 6×5; posições dos cards.</li>
+          <li><b>Complexidade:</b> O(n) no shuffle e checagem.</li>
+          <li><b>Geometria/Matrizes:</b> 5×4 ou 6×5.</li>
         </ul>
-        <div class="row" style="margin-top:8px; justify-content:flex-start">
-          <button class="btn primary" id="btnBackLobby2">← Voltar ao Lobby</button>
-        </div>
+        <div class="row" style="margin-top:8px"><button class="btn primary" id="btnBackLobby">← Voltar ao Lobby</button></div>
       </div>
     </section>
 
@@ -203,15 +183,19 @@
     <section id="screen-game" class="screen">
       <div class="wrap glass">
         <div class="gbar">
-          <div class="row" style="gap:8px; align-items:center">
+          <div class="leftHUD">
             <button class="btn" id="btnBackInGame">← Voltar ao Lobby</button>
             <div class="stat">⏱️ <b id="time">00:00</b></div>
+          </div>
+          <div class="rightHUD">
             <div class="stat">🃏 <b id="moves">0</b> jogadas</div>
             <div class="stat">✅ <b id="pairs">0</b> pares</div>
             <button class="btn" id="btnRestart">Reiniciar</button>
+            <button class="btn" id="btnToggleSoundGame">🔈 Som: ON</button>
+            <div class="vol"><span>🔊</span><input id="volumeSliderGame" class="slider" type="range" min="0" max="100" value="70"></div>
           </div>
         </div>
-        <div class="hint" id="hint">Escolha uma carta 👀</div>
+        <div class="hint" id="hint">Boa sorte! 👀</div>
         <div id="board" class="board"></div>
       </div>
     </section>
@@ -234,210 +218,241 @@
     </div>
   </div>
 
-  <script>
-  const $ = s=>document.querySelector(s);
-  const fmtTime = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
-  const shuffle = a => { for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a };
+<script>
+/* ========== Helpers ========== */
+const $ = s=>document.querySelector(s);
+const fmtTime = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+const shuffle = a => { for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a };
 
-  // flags
-  const FP_KEY='mm_first_play'; if(localStorage.getItem(FP_KEY)===null) localStorage.setItem(FP_KEY,'true');
-  const PV_KEY='mm_preview_always'; if(localStorage.getItem(PV_KEY)===null) localStorage.setItem(PV_KEY,'true');
-  $('#cbPreview').checked = localStorage.getItem(PV_KEY)==='true';
-  $('#cbPreview').onchange = ()=> localStorage.setItem(PV_KEY, $('#cbPreview').checked?'true':'false');
+/* ========== WebAudio: música ambiente + SFX (sem arquivos) ========== */
+const AudioFX = {
+  ctx:null, master:null, inited:false,
+  musicBus:null, sfxBus:null, musicOn:false, musicIv:null, arpIv:null,
+  vol:0.7, soundOn:true,
 
-  // audio + sfx de botões
-  const AudioFX = {
-    ctx:null, master:null, inited:false, lobbyOn:false, lobbyIv:null,
-    init(){ if(this.inited) return; const AC=window.AudioContext||window.webkitAudioContext; this.ctx=new AC(); this.master=this.ctx.createGain(); this.master.gain.value=0.12; this.master.connect(this.ctx.destination); this.inited=true; },
-    tone(freq=800,dur=.07,type='sine',gain=0.10){ if(!this.inited) return; const o=this.ctx.createOscillator(); const g=this.ctx.createGain(); o.type=type; o.frequency.value=freq; g.gain.value=gain; o.connect(g); g.connect(this.master); const t=this.ctx.currentTime; o.start(t); g.gain.setValueAtTime(gain,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.stop(t+dur); },
-    btnClick(){ this.tone(520, .06, 'triangle', .08); },
-    startLobby(){ if(!this.inited||this.lobbyOn) return; this.lobbyOn=true; const chords=[[392,494,587],[440,554,659],[392,523,659],[349,440,587]]; let idx=0; this.lobbyIv=setInterval(()=>{ if(!this.lobbyOn) return; const c=chords[idx%chords.length]; c.forEach((f,i)=>this.tone(f,.7+i*0.12,'sine',.08)); idx++; }, 1100); },
-    stopLobby(){ this.lobbyOn=false; if(this.lobbyIv){ clearInterval(this.lobbyIv); this.lobbyIv=null; } },
-    flipOpen(){ this.tone(760,.07,'sine',.09) }, flipClose(){ this.tone(340,.09,'sine',.09) },
-    match(){ this.tone(880,.08,'triangle',.11); setTimeout(()=>this.tone(1320,.09,'triangle',.11), 70); },
-    victory(){ const n=[523,659,784,988,1046,1318,1567]; let t=0; n.forEach((f,i)=>{ setTimeout(()=>this.tone(f,0.14+i*0.03,'triangle',.12), t*1000); t+=0.17; }); setTimeout(()=>[523,659,784].forEach(ff=>this.tone(ff,.7,'sawtooth',.12)), (t+0.1)*1000); }
-  };
+  init(){
+    if(this.inited) return;
+    const AC=window.AudioContext||window.webkitAudioContext;
+    this.ctx=new AC();
+    this.master=this.ctx.createGain(); this.master.gain.value=this.vol;
+    this.musicBus=this.ctx.createGain(); this.musicBus.gain.value=0.55; // música um pouco mais baixa
+    this.sfxBus=this.ctx.createGain(); this.sfxBus.gain.value=1.0;
 
-  // toggle som
-  let SOUND_ON = true;
-  function setSound(on){
-    SOUND_ON = on;
-    if(AudioFX.master){ AudioFX.master.gain.value = on ? 0.12 : 0.0; }
-    const b = $('#btnToggleSound'); if(b) b.textContent = on ? '🔈 Som: ON' : '🔇 Som: OFF';
+    this.musicBus.connect(this.master);
+    this.sfxBus.connect(this.master);
+    this.master.connect(this.ctx.destination);
+    this.inited=true;
+  },
+
+  setVolume(v){ this.vol=v; if(this.master) this.master.gain.value = this.soundOn ? v : 0; },
+  toggleSound(){ this.soundOn=!this.soundOn; if(this.master) this.master.gain.value = this.soundOn ? this.vol : 0; syncSoundButtons(); },
+
+  // —— SFX —— //
+  click(){
+    // blip + ruído curtinho
+    if(!this.inited) return;
+    // blip
+    const o=this.ctx.createOscillator(); const g=this.ctx.createGain();
+    o.type='triangle'; o.frequency.setValueAtTime(660,this.ctx.currentTime);
+    g.gain.value=.18; o.connect(g); g.connect(this.sfxBus);
+    const t=this.ctx.currentTime; o.start(t);
+    o.frequency.exponentialRampToValueAtTime(1200,t+0.06);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+0.08); o.stop(t+0.09);
+    // noise
+    const buf=this.ctx.createBuffer(1, this.ctx.sampleRate*0.06, this.ctx.sampleRate);
+    const data=buf.getChannelData(0); for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*0.25;
+    const nsrc=this.ctx.createBufferSource(); nsrc.buffer=buf;
+    const ng=this.ctx.createGain(); ng.gain.value=.12;
+    const bp=this.ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1500; bp.Q.value=4;
+    nsrc.connect(bp); bp.connect(ng); ng.connect(this.sfxBus);
+    nsrc.start(); ng.gain.exponentialRampToValueAtTime(0.0001,this.ctx.currentTime+0.06);
+  },
+  flipOpen(){ this.tone(760,.07,'sine',.12) },
+  flipClose(){ this.tone(340,.09,'sine',.12) },
+  match(){ this.tone(880,.08,'triangle',.14); setTimeout(()=>this.tone(1320,.09,'triangle',.14),70); },
+  victory(){
+    const notes=[523,659,784,988,1046,1318,1567]; let dt=0;
+    notes.forEach((f,i)=>{ setTimeout(()=>this.tone(f,0.16+i*0.03,'triangle',.16),dt*1000); dt+=0.17; });
+    setTimeout(()=>[523,659,784].forEach(ff=>this.tone(ff,.6,'sawtooth',.14)),(dt+0.1)*1000);
+  },
+  tone(freq=800,dur=.07,type='sine',gain=0.10){
+    if(!this.inited) return;
+    const o=this.ctx.createOscillator(); const g=this.ctx.createGain();
+    o.type=type; o.frequency.value=freq; g.gain.value=gain; o.connect(g); g.connect(this.sfxBus);
+    const t=this.ctx.currentTime; o.start(t);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.stop(t+dur);
+  },
+
+  // —— Música lo-fi procedural —— //
+  startMusic(){
+    if(!this.inited || this.musicOn) return;
+    this.musicOn=true;
+
+    // pad (acorde suave alternando)
+    const chords=[[196,247,294],[220,277,330],[174,220,294],[196,247,330]]; // G, A, F#, G
+    let cIdx=0;
+    const playPad=()=>{
+      const now=this.ctx.currentTime;
+      const chord=chords[cIdx%chords.length];
+      chord.forEach((f,i)=>{
+        const o=this.ctx.createOscillator(); const g=this.ctx.createGain();
+        o.type='sine'; o.frequency.value=f; g.gain.value=0.0001;
+        o.connect(g); g.connect(this.musicBus);
+        o.start(now);
+        g.gain.exponentialRampToValueAtTime(0.20/(i+1), now+0.2+i*0.05);
+        // release após 5s
+        g.gain.exponentialRampToValueAtTime(0.0001, now+5.5);
+        o.stop(now+6);
+      });
+      cIdx++;
+    };
+    playPad();
+    this.musicIv=setInterval(playPad, 5500);
+
+    // arpejo leve por cima
+    const scale=[0,2,4,7,9]; // pentatônica
+    let step=0;
+    this.arpIv=setInterval(()=>{
+      const base=[196,220,174,196][(cIdx-1+4)%4];
+      const f=base*Math.pow(2, (scale[step%scale.length]+12)/12);
+      const o=this.ctx.createOscillator(); const g=this.ctx.createGain();
+      o.type='triangle'; o.frequency.value=f; g.gain.value=0.0001; o.connect(g); g.connect(this.musicBus);
+      const t=this.ctx.currentTime;
+      o.start(t);
+      g.gain.linearRampToValueAtTime(0.08, t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+0.35);
+      o.stop(t+0.36);
+      step++;
+    }, 420);
+  },
+  stopMusic(){
+    this.musicOn=false;
+    if(this.musicIv){ clearInterval(this.musicIv); this.musicIv=null; }
+    if(this.arpIv){ clearInterval(this.arpIv); this.arpIv=null; }
   }
-  document.addEventListener('DOMContentLoaded', ()=> setSound(true));
-  $('#btnToggleSound')?.addEventListener('click', ()=>{ AudioFX.btnClick(); setSound(!SOUND_ON); });
+};
 
-  // deck/theme — frutas suficientes para 30 cartas sem repetir à toa
-  const PALETTE=['#ff7675','#74b9ff','#55efc4','#fdcb6e','#a29bfe','#ffeaa7','#81ecec','#fab1a0','#fd79a8','#00b894','#0984e3','#6c5ce7'];
-  const FRUTAS_BASE=['🍎','🍌','🍇','🍓','🍍','🍑','🍉','🥝','🍐','🍒','🍊','🍈','🍋','🍏','🥥','🍑','🍍','🍇']; // >=15 únicas
-  function uniqueFirst(arr, n){
-    const uniq=[...new Set(arr)];
-    if(uniq.length>=n) return uniq.slice(0,n);
-    // se faltar, completa com repetições equilibradas
-    const out=[...uniq]; let i=0;
-    while(out.length<n){ out.push(arr[i%arr.length]); i++; }
-    return out;
+function syncSoundButtons(){
+  $('#btnToggleSound').textContent     = AudioFX.soundOn ? '🔈 Som: ON' : '🔇 Som: OFF';
+  $('#btnToggleSoundGame').textContent = AudioFX.soundOn ? '🔈 Som: ON' : '🔇 Som: OFF';
+  const v=Math.round(AudioFX.vol*100);
+  if($('#volumeSlider'))     $('#volumeSlider').value=v;
+  if($('#volumeSliderGame')) $('#volumeSliderGame').value=v;
+}
+
+/* ========== Deck/tema (cores únicas em 30) ========== */
+const FRUTAS=['🍎','🍌','🍇','🍓','🍍','🍑','🍉','🥝','🍐','🍒','🍊','🍈','🍋','🍏','🥥','🥭','🍅','🍆','🥕'];
+function makeDeck(size, theme){
+  const pairs=Math.floor(size/2); let items=[];
+  if(theme==='cores'){
+    for(let i=0;i<pairs;i++){ const h=(i*24)%360; items.push({t:'cor',v:`hsl(${h} 70% 55%)`}); }
+  }else{
+    items=FRUTAS.slice(0,pairs).map(f=>({t:'emoji',v:f}));
   }
-  function makeDeck(size, theme){
-    const pairs = Math.floor(size/2); let items=[];
-    if(theme==='cores'){
-      const colors=[...PALETTE];
-      while(colors.length<pairs){ const h=(colors.length*47)%360; colors.push(`hsl(${h} 80% 55%)`)}
-      items=colors.slice(0,pairs).map(c=>({t:'cor',v:c}));
-    }else{
-      const fruits = uniqueFirst(FRUTAS_BASE, pairs);
-      items=fruits.map(e=>({t:'emoji',v:e}));
-    }
-    return shuffle([...items, ...items]).map((x,i)=>({id:i,key:x.v,t:x.t,matched:false}));
+  return shuffle([...items, ...items]).map((x,i)=>({id:i,key:x.v,t:x.t,matched:false}));
+}
+
+/* ========== Estado/Telas ========== */
+const screens = { lobby: $('#screen-lobby'), game: $('#screen-game'), about: $('#screen-about') };
+function go(to){ Object.values(screens).forEach(s=>s.classList.remove('active')); screens[to].classList.add('active') }
+
+let G=null, timer=null, previewTimer=null;
+
+function buildBoard(){
+  const b=$('#board'); b.innerHTML=''; b.className='board '+(G.size==20?'cols-5':'cols-6');
+  G.deck.forEach((c,i)=>{
+    const el=document.createElement('button'); el.className='tile'; el.dataset.i=i;
+    const inner=document.createElement('div'); inner.className='tile-inner';
+    const front=document.createElement('div'); front.className='face front';
+    const back=document.createElement('div'); back.className='face back';
+    if(c.t==='cor'){ back.style.background=c.key; }
+    else { back.className+=' emoji'; back.textContent=c.key; }
+    inner.appendChild(front); inner.appendChild(back); el.appendChild(inner);
+    el.addEventListener('click',()=>flip(i));
+    b.appendChild(el);
+  });
+}
+
+function startTimer(){ if(timer) clearInterval(timer); timer=setInterval(()=>{ G.sec++; $('#time').textContent=fmtTime(G.sec); },1000) }
+function stopTimer(){ if(timer){ clearInterval(timer); timer=null } }
+
+function setHint(t){ $('#hint').textContent=t; }
+function startPreview(seconds){
+  if(!$('#cbPreview').checked){ setHint('Escolha uma carta 👀'); return; }
+  G.lock=true;
+  Array.from($('#board').children).forEach(t=>t.classList.add('flip'));
+  setHint('Boa sorte! 👀');
+  previewTimer=setTimeout(()=>{
+    Array.from($('#board').children).forEach(t=>t.classList.remove('flip'));
+    G.lock=false; setHint('Escolha uma carta 👀');
+  }, seconds*1000);
+}
+
+function newGame(size, theme){
+  G={ size, theme, deck:makeDeck(size,theme), first:null, second:null, lock:false, moves:0, pairs:0, sec:0 };
+  $('#moves').textContent='0'; $('#pairs').textContent='0'; $('#time').textContent='00:00';
+  buildBoard(); startTimer(); go('game'); startPreview(5);
+}
+
+function flip(i){
+  if(G.lock || G.deck[i].matched || G.first===i) return;
+  const tiles=$('#board').children;
+  if(G.first==null){
+    tiles[i].classList.add('flip'); AudioFX.flipOpen(); G.first=i; setHint('Escolha outra carta 👀'); return;
   }
-
-  // state / screens
-  const screens = { lobby: $('#screen-lobby'), game: $('#screen-game'), about: $('#screen-about') };
-  function go(to){ Object.values(screens).forEach(s=>s.classList.remove('active')); screens[to].classList.add('active') }
-  let G=null, timer=null, previewTimer=null, countdownTimer=null;
-
-  function newGame(size, theme){
-    const deck = makeDeck(size, theme);
-    G = { size, theme, deck, first:null, second:null, lock:false, moves:0, pairs:0, sec:0 };
-    $('#moves').textContent='0'; $('#pairs').textContent='0'; $('#time').textContent='00:00';
-    buildBoard();
-    startTimer();
-    go('game');
-
-    // PRÉVIA: 5s fixos; mensagem "Boa sorte! 👀"
-    if($('#cbPreview').checked){
-      startPreview(5);
-    }else{
-      setHint('Escolha uma carta 👀');
-    }
+  tiles[i].classList.add('flip'); AudioFX.flipOpen(); G.second=i; G.lock=true; G.moves++; $('#moves').textContent=G.moves;
+  const a=G.deck[G.first], b=G.deck[G.second];
+  if(a.key===b.key){
+    a.matched=b.matched=true; G.pairs++; $('#pairs').textContent=G.pairs; AudioFX.match();
+    setTimeout(()=>{ G.first=null; G.second=null; G.lock=false; if(G.pairs===Math.floor(G.size/2)) win(); else setHint('Escolha uma carta 👀'); }, 500);
+  }else{
+    setTimeout(()=>{ tiles[G.first].classList.remove('flip'); tiles[G.second].classList.remove('flip'); AudioFX.flipClose(); G.first=null; G.second=null; G.lock=false; setHint('Você errou, tente novamente! 🙄'); setTimeout(()=>setHint('Escolha uma carta 👀'),700); }, 800);
   }
+}
 
-  function buildBoard(){
-    const b = $('#board'); b.innerHTML=''; b.className='board ' + (G.size==20? 'cols-5':'cols-6');
-    G.deck.forEach((c,i)=>{
-      const el=document.createElement('button'); el.className='tile'; el.dataset.i=i;
-      const inner=document.createElement('div'); inner.className='tile-inner';
-      const front=document.createElement('div'); front.className='face front';
-      const back=document.createElement('div'); back.className='face back';
-      if(c.t==='cor'){ const dot=document.createElement('div'); dot.className='dot'; dot.style.background=c.key; back.appendChild(dot); }
-      else { const em=document.createElement('div'); em.className='emoji'; em.textContent=c.key; back.appendChild(em); }
-      inner.appendChild(front); inner.appendChild(back); el.appendChild(inner);
-      el.addEventListener('click', ()=> flip(i));
-      b.appendChild(el);
-    });
-  }
+function win(){
+  stopTimer(); AudioFX.victory();
+  $('#wTime').textContent=fmtTime(G.sec); $('#wMoves').textContent=G.moves; $('#wPairs').textContent=G.pairs;
+  const ov=$('#overlayWin'); ov.classList.add('show'); ov.setAttribute('aria-hidden','false');
+}
 
-  function startTimer(){ if(timer) clearInterval(timer); timer=setInterval(()=>{ G.sec++; $('#time').textContent=fmtTime(G.sec); }, 1000) }
-  function stopTimer(){ if(timer){ clearInterval(timer); timer=null } }
-  function clearPreviewTimers(){ if(previewTimer){ clearTimeout(previewTimer); previewTimer=null } if(countdownTimer){ clearInterval(countdownTimer); countdownTimer=null } }
+/* ========== Botões / Som / Volume / Click SFX ========== */
+function bindClickSfxToAll(){
+  document.querySelectorAll('button').forEach(b=>{
+    if(b.__clickBound) return;
+    b.addEventListener('click',()=>AudioFX.click(),{capture:true});
+    b.__clickBound=true;
+  });
+}
 
-  function setHint(txt){ const h=$('#hint'); if(h) h.textContent=txt; }
+$('#btnPlay').onclick = ()=>{ newGame(+$('#deckSize').value, $('#theme').value); };
+$('#btnRestart').onclick = ()=>{ if(G){ startPreview(0); newGame(G.size, G.theme); } };
+$('#btnBackInGame').onclick = ()=>{ stopTimer(); go('lobby'); };
+$('#btnBackFromWin').onclick = ()=>{ const ov=$('#overlayWin'); ov.classList.remove('show'); ov.setAttribute('aria-hidden','true'); go('lobby'); };
+$('#btnPlayAgain').onclick = ()=>{ const ov=$('#overlayWin'); ov.classList.remove('show'); ov.setAttribute('aria-hidden','true'); newGame(G.size, G.theme); };
 
-  function startPreview(seconds){
-    G.lock = true;
-    Array.from($('#board').children).forEach(t=>t.classList.add('flip'));
-    let rem = seconds;
-    setHint('Boa sorte! 👀'); // fica até acabar a prévia
-    countdownTimer = setInterval(()=>{
-      rem--;
-      if(rem<=0){ clearInterval(countdownTimer); countdownTimer=null; }
-    }, 1000);
-    previewTimer = setTimeout(()=>{
-      Array.from($('#board').children).forEach(t=>t.classList.remove('flip'));
-      G.lock = false;
-      setHint('Escolha uma carta 👀');
-    }, seconds*1000);
-  }
+$('#btnAbout').onclick = ()=> go('about');
+$('#btnBackLobby').onclick = ()=> go('lobby');
 
-  function flip(i){
-    if(G.lock || G.deck[i].matched || G.first===i) return;
-    const tiles=$('#board').children;
-    if(G.first==null){
-      tiles[i].classList.add('flip'); AudioFX.flipOpen(); G.first=i; setHint('Escolha outra carta 👀'); return;
-    }
-    tiles[i].classList.add('flip'); AudioFX.flipOpen(); G.second=i; G.lock=true; G.moves++; $('#moves').textContent=G.moves;
-    const a=G.deck[G.first], b=G.deck[G.second];
-    if(a.key===b.key){
-      a.matched=b.matched=true; G.pairs++; $('#pairs').textContent=G.pairs; AudioFX.match();
-      setTimeout(()=>{
-        setHint('Você acertou, continue! 🎉');
-        G.first=null; G.second=null; G.lock=false;
-        if(G.pairs === G.deck.length / 2) win();
-        else setTimeout(()=> setHint('Escolha uma carta 👀'), 450);
-      }, 320);
-    }else{
-      setTimeout(()=>{
-        tiles[G.first].classList.remove('flip');
-        tiles[G.second].classList.remove('flip');
-        AudioFX.flipClose();
-        setHint('Você errou, tente novamente! 🙄');
-        G.first=null; G.second=null; G.lock=false;
-        setTimeout(()=> setHint('Escolha uma carta 👀'), 700);
-      }, 680);
-    }
-  }
+$('#btnToggleSound').onclick = ()=> AudioFX.toggleSound();
+$('#btnToggleSoundGame').onclick = ()=> AudioFX.toggleSound();
+$('#volumeSlider').oninput = e => { AudioFX.setVolume(e.target.value/100); syncSoundButtons(); };
+$('#volumeSliderGame').oninput = e => { AudioFX.setVolume(e.target.value/100); syncSoundButtons(); };
 
-  function win(){
-    stopTimer(); AudioFX.victory();
-
-    const isFirstPlay = localStorage.getItem(FP_KEY)==='true';
-    if(isFirstPlay){
-      localStorage.setItem(FP_KEY,'false');
-      setTimeout(()=>{ go('lobby'); AudioFX.startLobby(); }, 500);
-      return;
-    }
-
-    $('#wTime').textContent  = fmtTime(G.sec);
-    $('#wMoves').textContent = G.moves;
-    $('#wPairs').textContent = G.pairs;
-
-    $('#overlayWin').classList.add('show');
-    $('#overlayWin').setAttribute('aria-hidden','false');
-  }
-
-  // —— SFX em todos os botões ——
-  function wireButtonSFX(){
-    document.querySelectorAll('button').forEach(btn=>{
-      btn.addEventListener('click', ()=>{ if(AudioFX.inited) AudioFX.btnClick(); }, {capture:true});
-    });
-  }
-
-  // events
-  $('#btnPlay').onclick = ()=>{
-    try{ if(!AudioFX.inited){ AudioFX.init(); AudioFX.ctx.resume(); } }catch(_){}
-    AudioFX.stopLobby();
-    newGame(+$('#deckSize').value, $('#theme').value);
-  };
-  $('#btnRestart').onclick = ()=>{ if(G){ clearPreviewTimers(); newGame(G.size, G.theme) } };
-  $('#btnBackInGame').onclick = ()=>{ stopTimer(); clearPreviewTimers(); go('lobby'); AudioFX.startLobby(); };
-  $('#btnBackFromWin').onclick = ()=>{
-    const ov = $('#overlayWin');
-    ov.classList.remove('show');
-    ov.setAttribute('aria-hidden','true');
-    go('lobby'); AudioFX.startLobby();
-  };
-  $('#btnPlayAgain').onclick = ()=>{
-    const ov = $('#overlayWin');
-    ov.classList.remove('show');
-    ov.setAttribute('aria-hidden','true');
-    newGame(G.size, G.theme);
-  };
-
-  // About navigation (ficou só o botão de baixo)
-  $('#btnAbout').onclick = ()=> go('about');
-  $('#btnBackLobby2').onclick = ()=> go('lobby');
-
-  // inicia música do lobby após a 1ª interação (mobile) + liga SFX dos botões
-  document.addEventListener('click', ()=>{
-    try{
-      if(!AudioFX.inited){ AudioFX.init(); AudioFX.ctx.resume(); AudioFX.startLobby(); }
-      wireButtonSFX();
-    }catch(e){}
-  }, {once:true});
-  </script>
+/* ========== Init (autoplay com fallback) ========== */
+window.addEventListener('load', ()=>{
+  AudioFX.init();
+  // tenta autoplay; se bloqueado, retoma no 1º clique
+  const resume = ()=>{ if(AudioFX.ctx.state==='suspended') AudioFX.ctx.resume(); AudioFX.startMusic(); document.removeEventListener('click',resume); };
+  AudioFX.startMusic();
+  if(AudioFX.ctx.state==='suspended'){ document.addEventListener('click',resume,{once:true}); }
+  bindClickSfxToAll();
+  syncSoundButtons();
+});
+</script>
 </body>
 </html>
+
 
 
 
