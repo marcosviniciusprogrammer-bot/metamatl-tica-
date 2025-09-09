@@ -21,11 +21,17 @@
       color:var(--text); display:flex; align-items:center; justify-content:center; padding:22px
     }
     .app{ width:min(1150px,100%)}
-    .glass{ background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+
+    /* —— cards de vidro com animações mais modernas —— */
+    .glass{
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
       border:1px solid rgba(255,255,255,.15); backdrop-filter: blur(12px);
-      border-radius:var(--radius); box-shadow:var(--shadow); animation: fadeIn .8s ease
+      border-radius:var(--radius); box-shadow:var(--shadow);
+      animation: fadeIn .7s ease, floatUp .9s cubic-bezier(.2,.8,.2,1)
     }
-    @keyframes fadeIn{from{opacity:0; transform:translateY(20px)}to{opacity:1; transform:translateY(0)}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes floatUp{from{transform:translateY(16px)}to{transform:translateY(0)}}
+
     .wrap{ padding:20px }
     header{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:14px }
     h1{ margin:0; font-size:clamp(24px,5vw,44px); letter-spacing:.4px; text-shadow:0 0 10px rgba(122,162,255,.6)}
@@ -34,33 +40,52 @@
     .muted{ color:var(--muted) }
     .row{ display:flex; gap:14px; flex-wrap:wrap; align-items:center }
     .col{ flex:1 1 280px }
-    .btn{ background:rgba(20,28,80,.85); border:1px solid #2a3a7a; color:var(--text);
+
+    /* —— botões com micro animações —— */
+    .btn{
+      background:rgba(20,28,80,.85); border:1px solid #2a3a7a; color:var(--text);
       padding:14px 16px; border-radius:16px; font-weight:800; letter-spacing:.3px; cursor:pointer;
-      transition: .2s transform ease, .2s box-shadow ease }
-    .btn:hover{ transform:translateY(-2px); box-shadow:0 12px 28px rgba(90,130,255,.35) }
+      transition: transform .16s ease, box-shadow .16s ease, filter .2s ease
+    }
+    .btn:hover{ transform:translateY(-2px) scale(1.02); box-shadow:0 12px 28px rgba(90,130,255,.35) }
     .btn:active{ transform:translateY(0) scale(.97) }
-    .btn.primary{ background:linear-gradient(180deg, #9ec2ff, #5b86ff); color:#0a0f1e; border:none;
-      box-shadow:0 0 16px rgba(91,134,255,.7) }
+    .btn.primary{
+      background:linear-gradient(180deg, #9ec2ff, #5b86ff); color:#0a0f1e; border:none;
+      box-shadow:0 0 16px rgba(91,134,255,.7)
+    }
     .btn.ghost{ background:rgba(15,25,60,.65) }
     select{ width:100%; background:#0d163d; color:#fff; border:1px solid #2a355a;
       padding:12px 14px; border-radius:14px; font-weight:700 }
     label{ display:block; font-size:15px; color:var(--muted); margin:4px 2px 8px }
     .screen{ display:none } .screen.active{ display:block }
 
-    /* Lobby */
-    .hero{ display:grid; grid-template-columns: 1.3fr 1fr; gap:20px; align-items:center }
+    /* —— Lobby responsivo renovado —— */
+    .hero{ display:grid; grid-template-columns: 1.2fr 1fr; gap:20px; align-items:stretch }
     .brand{
-      padding:26px; border-radius:22px;
-      background: radial-gradient(120% 120% at -10% -20%, rgba(122,162,255,.25), transparent),
-                  linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      padding:26px; border-radius:22px; position:relative; overflow:hidden;
+      background:
+        radial-gradient(120% 120% at -10% -20%, rgba(122,162,255,.25), transparent),
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
       border:1px solid rgba(255,255,255,.15);
       box-shadow: 0 30px 60px rgba(12,20,56,.45), inset 0 0 40px rgba(122,162,255,.15);
+      animation: cardPop .6s ease
     }
+    @keyframes cardPop{from{transform:scale(.98); opacity:.8}to{transform:scale(1); opacity:1}}
     .brand h2{ margin:0 0 6px; font-size:clamp(22px,4vw,36px) }
     .brand p{ margin:0; color:var(--muted) }
-    .settings{ padding:20px; border-radius:22px; background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04)); border:1px solid rgba(255,255,255,.15) }
+    .settings{
+      padding:20px; border-radius:22px;
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+      border:1px solid rgba(255,255,255,.15);
+      animation: cardPop .65s ease .04s both
+    }
     .chk{ display:flex; align-items:center; gap:10px; margin-top:12px; color:var(--muted); font-weight:700 }
     .chk input{ width:18px; height:18px }
+
+    /* mobile: pilha */
+    @media (max-width: 780px){
+      .hero{ grid-template-columns: 1fr; }
+    }
 
     /* Board & cards */
     .board{ display:grid; gap:14px; padding:16px; border-radius:var(--radius);
@@ -132,9 +157,10 @@
                 </select>
               </div>
             </div>
-            <label class="chk"><input type="checkbox" id="cbPreview"> Mostrar prévia de 10s antes de começar</label>
+            <label class="chk"><input type="checkbox" id="cbPreview"> Mostrar prévia de 5s antes de começar</label>
             <div class="row" style="margin-top:12px">
               <button id="btnPlay" class="btn primary">🚀 Jogar</button>
+              <button id="btnToggleSound" class="btn">🔈 Som: ON</button>
             </div>
           </div>
         </div>
@@ -144,10 +170,7 @@
     <!-- ABOUT -->
     <section id="screen-about" class="screen">
       <div class="wrap glass about">
-        <div class="row" style="justify-content:space-between; align-items:center">
-          <h2 style="margin:8px 0">ℹ️ Pensamento Computacional, Design de Jogos e Matemática</h2>
-          <button class="btn" id="btnBackLobby1">← Voltar ao Lobby</button>
-        </div>
+        <!-- REMOVIDO o botão de voltar de cima -->
         <h3>Pensamento Computacional</h3>
         <ul>
           <li><b>Decomposição:</b> lobby, tabuleiro, turnos, vitória.</li>
@@ -170,7 +193,7 @@
           <li><b>Complexidade:</b> custo do shuffle e da checagem (O(n)).</li>
           <li><b>Geometria/Matrizes:</b> grade 5×4 ou 6×5; posições dos cards.</li>
         </ul>
-        <div class="row" style="margin-top:8px">
+        <div class="row" style="margin-top:8px; justify-content:flex-start">
           <button class="btn primary" id="btnBackLobby2">← Voltar ao Lobby</button>
         </div>
       </div>
@@ -188,7 +211,7 @@
             <button class="btn" id="btnRestart">Reiniciar</button>
           </div>
         </div>
-        <div class="hint" id="hint">Escolha uma carta</div>
+        <div class="hint" id="hint">Escolha uma carta 👀</div>
         <div id="board" class="board"></div>
       </div>
     </section>
@@ -222,11 +245,12 @@
   $('#cbPreview').checked = localStorage.getItem(PV_KEY)==='true';
   $('#cbPreview').onchange = ()=> localStorage.setItem(PV_KEY, $('#cbPreview').checked?'true':'false');
 
-  // audio
+  // audio + sfx de botões
   const AudioFX = {
     ctx:null, master:null, inited:false, lobbyOn:false, lobbyIv:null,
     init(){ if(this.inited) return; const AC=window.AudioContext||window.webkitAudioContext; this.ctx=new AC(); this.master=this.ctx.createGain(); this.master.gain.value=0.12; this.master.connect(this.ctx.destination); this.inited=true; },
     tone(freq=800,dur=.07,type='sine',gain=0.10){ if(!this.inited) return; const o=this.ctx.createOscillator(); const g=this.ctx.createGain(); o.type=type; o.frequency.value=freq; g.gain.value=gain; o.connect(g); g.connect(this.master); const t=this.ctx.currentTime; o.start(t); g.gain.setValueAtTime(gain,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.stop(t+dur); },
+    btnClick(){ this.tone(520, .06, 'triangle', .08); },
     startLobby(){ if(!this.inited||this.lobbyOn) return; this.lobbyOn=true; const chords=[[392,494,587],[440,554,659],[392,523,659],[349,440,587]]; let idx=0; this.lobbyIv=setInterval(()=>{ if(!this.lobbyOn) return; const c=chords[idx%chords.length]; c.forEach((f,i)=>this.tone(f,.7+i*0.12,'sine',.08)); idx++; }, 1100); },
     stopLobby(){ this.lobbyOn=false; if(this.lobbyIv){ clearInterval(this.lobbyIv); this.lobbyIv=null; } },
     flipOpen(){ this.tone(760,.07,'sine',.09) }, flipClose(){ this.tone(340,.09,'sine',.09) },
@@ -234,13 +258,37 @@
     victory(){ const n=[523,659,784,988,1046,1318,1567]; let t=0; n.forEach((f,i)=>{ setTimeout(()=>this.tone(f,0.14+i*0.03,'triangle',.12), t*1000); t+=0.17; }); setTimeout(()=>[523,659,784].forEach(ff=>this.tone(ff,.7,'sawtooth',.12)), (t+0.1)*1000); }
   };
 
-  // deck/theme
+  // toggle som
+  let SOUND_ON = true;
+  function setSound(on){
+    SOUND_ON = on;
+    if(AudioFX.master){ AudioFX.master.gain.value = on ? 0.12 : 0.0; }
+    const b = $('#btnToggleSound'); if(b) b.textContent = on ? '🔈 Som: ON' : '🔇 Som: OFF';
+  }
+  document.addEventListener('DOMContentLoaded', ()=> setSound(true));
+  $('#btnToggleSound')?.addEventListener('click', ()=>{ AudioFX.btnClick(); setSound(!SOUND_ON); });
+
+  // deck/theme — frutas suficientes para 30 cartas sem repetir à toa
   const PALETTE=['#ff7675','#74b9ff','#55efc4','#fdcb6e','#a29bfe','#ffeaa7','#81ecec','#fab1a0','#fd79a8','#00b894','#0984e3','#6c5ce7'];
-  const FRUTAS=['🍎','🍌','🍇','🍓','🍍','🍑','🍉','🥝','🍐','🍒'];
+  const FRUTAS_BASE=['🍎','🍌','🍇','🍓','🍍','🍑','🍉','🥝','🍐','🍒','🍊','🍈','🍋','🍏','🥥','🍑','🍍','🍇']; // >=15 únicas
+  function uniqueFirst(arr, n){
+    const uniq=[...new Set(arr)];
+    if(uniq.length>=n) return uniq.slice(0,n);
+    // se faltar, completa com repetições equilibradas
+    const out=[...uniq]; let i=0;
+    while(out.length<n){ out.push(arr[i%arr.length]); i++; }
+    return out;
+  }
   function makeDeck(size, theme){
     const pairs = Math.floor(size/2); let items=[];
-    if(theme==='cores'){ const colors=[...PALETTE]; while(colors.length<pairs){ const h=(colors.length*47)%360; colors.push(`hsl(${h} 80% 55%)`) } items=colors.slice(0,pairs).map(c=>({t:'cor',v:c})); }
-    else { const fruits=[...FRUTAS]; while(fruits.length<pairs){ fruits.push('🍏','🥭','🍊')[fruits.length%3] } items=fruits.slice(0,pairs).map(e=>({t:'emoji',v:e})); }
+    if(theme==='cores'){
+      const colors=[...PALETTE];
+      while(colors.length<pairs){ const h=(colors.length*47)%360; colors.push(`hsl(${h} 80% 55%)`)}
+      items=colors.slice(0,pairs).map(c=>({t:'cor',v:c}));
+    }else{
+      const fruits = uniqueFirst(FRUTAS_BASE, pairs);
+      items=fruits.map(e=>({t:'emoji',v:e}));
+    }
     return shuffle([...items, ...items]).map((x,i)=>({id:i,key:x.v,t:x.t,matched:false}));
   }
 
@@ -257,11 +305,11 @@
     startTimer();
     go('game');
 
-    // PRÉVIA: checkbox controla
+    // PRÉVIA: 5s fixos; mensagem "Boa sorte! 👀"
     if($('#cbPreview').checked){
-      startPreview(10);
+      startPreview(5);
     }else{
-      $('#hint').textContent='Escolha uma carta';
+      setHint('Escolha uma carta 👀');
     }
   }
 
@@ -284,19 +332,21 @@
   function stopTimer(){ if(timer){ clearInterval(timer); timer=null } }
   function clearPreviewTimers(){ if(previewTimer){ clearTimeout(previewTimer); previewTimer=null } if(countdownTimer){ clearInterval(countdownTimer); countdownTimer=null } }
 
+  function setHint(txt){ const h=$('#hint'); if(h) h.textContent=txt; }
+
   function startPreview(seconds){
     G.lock = true;
     Array.from($('#board').children).forEach(t=>t.classList.add('flip'));
     let rem = seconds;
-    $('#hint').textContent = `Memorize as cartas (${rem}s)`;
+    setHint('Boa sorte! 👀'); // fica até acabar a prévia
     countdownTimer = setInterval(()=>{
-      rem--; $('#hint').textContent = `Memorize as cartas (${rem}s)`;
+      rem--;
       if(rem<=0){ clearInterval(countdownTimer); countdownTimer=null; }
     }, 1000);
     previewTimer = setTimeout(()=>{
       Array.from($('#board').children).forEach(t=>t.classList.remove('flip'));
       G.lock = false;
-      $('#hint').textContent = 'Escolha uma carta';
+      setHint('Escolha uma carta 👀');
     }, seconds*1000);
   }
 
@@ -304,22 +354,33 @@
     if(G.lock || G.deck[i].matched || G.first===i) return;
     const tiles=$('#board').children;
     if(G.first==null){
-      tiles[i].classList.add('flip'); AudioFX.flipOpen(); G.first=i; $('#hint').textContent='Agora outra carta'; return;
+      tiles[i].classList.add('flip'); AudioFX.flipOpen(); G.first=i; setHint('Escolha outra carta 👀'); return;
     }
     tiles[i].classList.add('flip'); AudioFX.flipOpen(); G.second=i; G.lock=true; G.moves++; $('#moves').textContent=G.moves;
     const a=G.deck[G.first], b=G.deck[G.second];
     if(a.key===b.key){
       a.matched=b.matched=true; G.pairs++; $('#pairs').textContent=G.pairs; AudioFX.match();
-      setTimeout(()=>{ $('#hint').textContent='Continue jogando'; G.first=null; G.second=null; G.lock=false; if(G.pairs===Math.floor(G.size/2)) win(); }, 350);
+      setTimeout(()=>{
+        setHint('Você acertou, continue! 🎉');
+        G.first=null; G.second=null; G.lock=false;
+        if(G.pairs === G.deck.length / 2) win();
+        else setTimeout(()=> setHint('Escolha uma carta 👀'), 450);
+      }, 320);
     }else{
-      setTimeout(()=>{ tiles[G.first].classList.remove('flip'); tiles[G.second].classList.remove('flip'); AudioFX.flipClose(); G.first=null; G.second=null; G.lock=false; $('#hint').textContent='Se errar, passa a vez'; }, 700);
+      setTimeout(()=>{
+        tiles[G.first].classList.remove('flip');
+        tiles[G.second].classList.remove('flip');
+        AudioFX.flipClose();
+        setHint('Você errou, tente novamente! 🙄');
+        G.first=null; G.second=null; G.lock=false;
+        setTimeout(()=> setHint('Escolha uma carta 👀'), 700);
+      }, 680);
     }
   }
 
   function win(){
     stopTimer(); AudioFX.victory();
 
-    // Primeira vez: sem modal (mantido)
     const isFirstPlay = localStorage.getItem(FP_KEY)==='true';
     if(isFirstPlay){
       localStorage.setItem(FP_KEY,'false');
@@ -327,13 +388,19 @@
       return;
     }
 
-    // Estatísticas na vitória
     $('#wTime').textContent  = fmtTime(G.sec);
     $('#wMoves').textContent = G.moves;
     $('#wPairs').textContent = G.pairs;
 
     $('#overlayWin').classList.add('show');
     $('#overlayWin').setAttribute('aria-hidden','false');
+  }
+
+  // —— SFX em todos os botões ——
+  function wireButtonSFX(){
+    document.querySelectorAll('button').forEach(btn=>{
+      btn.addEventListener('click', ()=>{ if(AudioFX.inited) AudioFX.btnClick(); }, {capture:true});
+    });
   }
 
   // events
@@ -344,8 +411,6 @@
   };
   $('#btnRestart').onclick = ()=>{ if(G){ clearPreviewTimers(); newGame(G.size, G.theme) } };
   $('#btnBackInGame').onclick = ()=>{ stopTimer(); clearPreviewTimers(); go('lobby'); AudioFX.startLobby(); };
-
-  // CORRIGIDO: fecha modal + aria-hidden
   $('#btnBackFromWin').onclick = ()=>{
     const ov = $('#overlayWin');
     ov.classList.remove('show');
@@ -359,13 +424,25 @@
     newGame(G.size, G.theme);
   };
 
-  // About navigation
+  // About navigation (ficou só o botão de baixo)
   $('#btnAbout').onclick = ()=> go('about');
-  $('#btnBackLobby1').onclick = $('#btnBackLobby2').onclick = ()=> go('lobby');
+  $('#btnBackLobby2').onclick = ()=> go('lobby');
 
-  // inicia música do lobby após a 1ª interação (mobile) — única instância
-  document.addEventListener('click', ()=>{ try{ if(!AudioFX.inited){ AudioFX.init(); AudioFX.ctx.resume(); AudioFX.startLobby(); } }catch(e){} }, {once:true});
+  // inicia música do lobby após a 1ª interação (mobile) + liga SFX dos botões
+  document.addEventListener('click', ()=>{
+    try{
+      if(!AudioFX.inited){ AudioFX.init(); AudioFX.ctx.resume(); AudioFX.startLobby(); }
+      wireButtonSFX();
+    }catch(e){}
+  }, {once:true});
   </script>
 </body>
 </html>
+
+  
+    
+
+       
+   
+    
 
