@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Metamatlética — Jogo da Memória v3.16</title>
+  <title>Metamatlética — Jogo da Memória v3.15</title>
   <style>
     :root{
       --bg:#060917;--bg2:#0a1030;--panel:#0c1331;--card:#0e163c;
@@ -34,14 +34,8 @@
     .face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;border-radius:20px}
     .face.front{background:#1d2a63}.face.back{transform:rotateY(180deg);background:#2a355a}
     .emoji{font-size:40px}
-    .gbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap}
+    .gbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
     .stat{background:rgba(12,20,56,.65);padding:10px 12px;border-radius:12px;font-size:14px}
-    /* slider estilizado */
-    .volume-wrap{display:flex;align-items:center;gap:8px;margin-top:10px}
-    .slider{appearance:none;width:120px;height:6px;background:#2a3a7a;border-radius:6px;outline:none;transition:all .2s}
-    .slider:hover{background:#4a6aff}
-    .slider::-webkit-slider-thumb{appearance:none;width:16px;height:16px;background:#7aa2ff;border-radius:50%;cursor:pointer;box-shadow:0 0 6px #7aa2ff;transition:transform .2s}
-    .slider::-webkit-slider-thumb:hover{transform:scale(1.2)}
   </style>
 </head>
 <body>
@@ -64,9 +58,6 @@
           <button id="btnPlay" class="btn primary">🚀 Jogar</button>
           <button id="btnToggleSound" class="btn">🔈 Som: ON</button>
         </div>
-        <div class="volume-wrap">
-          <span>🔊</span><input type="range" id="volumeSlider" class="slider" min="0" max="100" value="70">
-        </div>
       </div>
     </section>
 
@@ -78,9 +69,6 @@
             <button class="btn" id="btnBackInGame">← Lobby</button>
             <button class="btn" id="btnRestart">Reiniciar</button>
             <button class="btn" id="btnToggleSoundGame">🔈 Som: ON</button>
-            <div class="volume-wrap">
-              <span>🔊</span><input type="range" id="volumeSliderGame" class="slider" min="0" max="100" value="70">
-            </div>
           </div>
           <div class="stat">⏱ <b id="time">00:00</b></div>
           <div class="stat">🃏 <b id="moves">0</b></div>
@@ -109,39 +97,45 @@
   const fmtTime=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
   const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 
+  // arquivos de áudio
   const CLICK_URL="audio/Click.mp3";
   const GAME_MUSIC_URL="audio/Playground-Of-The-Stars-A.mp3";
 
+  // áudio
   const AudioFX={
     ctx:null,inited:false,master:null,musicSource:null,
     init(){if(this.inited)return;const AC=window.AudioContext||window.webkitAudioContext;this.ctx=new AC();
-      this.master=this.ctx.createGain();this.master.connect(this.ctx.destination);this.master.gain.value=0.7;this.inited=true;},
-    async playClick(){if(!this.inited)return;const a=new Audio(CLICK_URL);a.volume=this.master.gain.value;await a.play();},
-    async playGameMusic(){if(!this.inited)return;this.stopGameMusic();const a=new Audio(GAME_MUSIC_URL);a.loop=true;a.volume=this.master.gain.value;await a.play();this.musicSource=a;},
+      this.master=this.ctx.createGain();this.master.connect(this.ctx.destination);this.master.gain.value=1;this.inited=true;},
+    async playClick(){if(!this.inited)return;const a=new Audio(CLICK_URL);a.volume=0.8;await a.play();},
+    async playGameMusic(){if(!this.inited)return;this.stopGameMusic();const a=new Audio(GAME_MUSIC_URL);a.loop=true;a.volume=0.4;a.play();this.musicSource=a;},
     stopGameMusic(){if(this.musicSource){this.musicSource.pause();this.musicSource=null;}},
-    setVolume(v){this.master.gain.value=v;}
+    toggle(on){this.master.gain.value=on?1:0;}
   };
 
   let SOUND_ON=true;
-  function setSound(on){SOUND_ON=on;AudioFX.setVolume(on?($('#volumeSlider').value/100):0);
-    $('#btnToggleSound').textContent=on?'🔈 Som: ON':'🔇 Som: OFF';
-    $('#btnToggleSoundGame').textContent=on?'🔈 Som: ON':'🔇 Som: OFF';
+  function setSound(on){SOUND_ON=on;AudioFX.toggle(on);
+    const b1=$('#btnToggleSound');if(b1)b1.textContent=on?'🔈 Som: ON':'🔇 Som: OFF';
+    const b2=$('#btnToggleSoundGame');if(b2)b2.textContent=on?'🔈 Som: ON':'🔇 Som: OFF';
   }
 
-  let G=null,timer=null,previewTimer=null;
+  // jogo
+  let G=null,timer=null,previewTimer=null,countdownTimer=null;
   function makeDeck(size,theme){
     const pairs=Math.floor(size/2);let items=[];
     const PALETTE=['#ff7675','#74b9ff','#55efc4','#fdcb6e','#a29bfe','#ffeaa7','#81ecec','#fab1a0','#fd79a8','#00b894','#0984e3','#6c5ce7'];
     const FRUTAS=['🍎','🍌','🍇','🍓','🍍','🍑','🍉','🥝','🍐','🍒','🍊','🍈','🍋','🍏','🥥','🍅'];
-    if(theme==='cores'){for(let i=0;i<pairs;i++){const h=(i*25)%360;items.push({t:'cor',v:`hsl(${h},70%,55%)`});}}
-    else{items=FRUTAS.slice(0,pairs).map(f=>({t:'emoji',v:f}));}
+    if(theme==='cores'){
+      items=[];
+      for(let i=0;i<pairs;i++){const h=(i*25)%360;items.push({t:'cor',v:`hsl(${h},70%,55%)`});}
+    }else{items=FRUTAS.slice(0,pairs).map(f=>({t:'emoji',v:f}));}
     return shuffle([...items,...items]).map((x,i)=>({id:i,key:x.v,t:x.t,matched:false}));
   }
 
   function newGame(size,theme){
     G={size,theme,deck:makeDeck(size,theme),first:null,second:null,lock:false,moves:0,pairs:0,sec:0};
     $('#moves').textContent='0';$('#pairs').textContent='0';$('#time').textContent='00:00';
-    buildBoard();startTimer();go('game');AudioFX.playGameMusic();startPreview(5);
+    buildBoard();startTimer();go('game');AudioFX.playGameMusic();
+    startPreview(5);
   }
 
   function buildBoard(){const b=$('#board');b.innerHTML='';b.className='board '+(G.size==20?'cols-5':'cols-6');
@@ -155,19 +149,39 @@
 
   function startTimer(){if(timer)clearInterval(timer);timer=setInterval(()=>{G.sec++;$('#time').textContent=fmtTime(G.sec);},1000)}
   function stopTimer(){if(timer){clearInterval(timer);timer=null}}
-  function startPreview(seconds){G.lock=true;Array.from($('#board').children).forEach(t=>t.classList.add('flip'));
-    $('#hint').textContent="Boa sorte! 👀";previewTimer=setTimeout(()=>{Array.from($('#board').children).forEach(t=>t.classList.remove('flip'));G.lock=false;$('#hint').textContent="Escolha uma carta 👀";},seconds*1000);}
-  function flip(i){if(G.lock||G.deck[i].matched||G.first===i)return;
-    const tiles=$('#board').children;if(G.first==null){tiles[i].classList.add('flip');G.first=i;$('#hint').textContent='Escolha outra carta 👀';return;}
-    tiles[i].classList.add('flip');G.second=i;G.lock=true;G.moves++;$('#moves').textContent=G.moves;const a=G.deck[G.first],b=G.deck[G.second];
-    if(a.key===b.key){a.matched=b.matched=true;G.pairs++;$('#pairs').textContent=G.pairs;$('#hint').textContent='Você acertou 🎉';
+  function clearPreviewTimers(){if(previewTimer){clearTimeout(previewTimer);previewTimer=null}if(countdownTimer){clearInterval(countdownTimer);countdownTimer=null}}
+
+  function startPreview(seconds){
+    G.lock=true;
+    Array.from($('#board').children).forEach(t=>t.classList.add('flip'));
+    $('#hint').textContent="Boa sorte! 👀";
+    previewTimer=setTimeout(()=>{
+      Array.from($('#board').children).forEach(t=>t.classList.remove('flip'));
+      G.lock=false;$('#hint').textContent="Escolha uma carta 👀";
+    },seconds*1000);
+  }
+
+  function flip(i){
+    if(G.lock||G.deck[i].matched||G.first===i)return;
+    const tiles=$('#board').children;
+    if(G.first==null){
+      tiles[i].classList.add('flip');G.first=i;$('#hint').textContent='Escolha outra carta 👀';return;
+    }
+    tiles[i].classList.add('flip');G.second=i;G.lock=true;G.moves++;$('#moves').textContent=G.moves;
+    const a=G.deck[G.first],b=G.deck[G.second];
+    if(a.key===b.key){a.matched=b.matched=true;G.pairs++;$('#pairs').textContent=G.pairs;$('#hint').textContent='Você acertou, continue! 🎉';
       setTimeout(()=>{G.first=G.second=null;G.lock=false;if(G.pairs===G.deck.length/2)win();else $('#hint').textContent="Escolha uma carta 👀";},600);}
-    else{$('#hint').textContent='Você errou 🙄';setTimeout(()=>{tiles[G.first].classList.remove('flip');tiles[G.second].classList.remove('flip');G.first=G.second=null;G.lock=false;$('#hint').textContent="Escolha uma carta 👀";},900);}}
+    else{$('#hint').textContent='Você errou, tente novamente! 🙄';
+      setTimeout(()=>{tiles[G.first].classList.remove('flip');tiles[G.second].classList.remove('flip');G.first=G.second=null;G.lock=false;$('#hint').textContent="Escolha uma carta 👀";},900);}
+  }
+
   function win(){stopTimer();AudioFX.stopGameMusic();go('win');
     $('#wTime').textContent=fmtTime(G.sec);$('#wMoves').textContent=G.moves;$('#wPairs').textContent=G.pairs;}
 
-  function go(to){['lobby','game','win'].forEach(id=>$('#screen-'+id)?.classList.remove('active'));$('#screen-'+to)?.classList.add('active');}
+  function go(to){['lobby','game','win'].forEach(id=>$('#screen-'+id)?.classList.remove('active'));
+    $('#screen-'+to)?.classList.add('active');}
 
+  // eventos
   function addBtnClickSound(sel){document.querySelectorAll(sel).forEach(b=>b.addEventListener('click',()=>AudioFX.playClick()));}
   $('#btnPlay').onclick=()=>{AudioFX.init();setSound(SOUND_ON);newGame(+$('#deckSize').value,$('#theme').value);};
   $('#btnRestart').onclick=()=>{if(G)newGame(G.size,G.theme)};
@@ -177,14 +191,12 @@
   $('#btnToggleSound').onclick=()=>setSound(!SOUND_ON);
   $('#btnToggleSoundGame').onclick=()=>setSound(!SOUND_ON);
 
-  // sliders volume
-  $('#volumeSlider').oninput=()=>{if(SOUND_ON)AudioFX.setVolume($('#volumeSlider').value/100);}
-  $('#volumeSliderGame').oninput=()=>{if(SOUND_ON)AudioFX.setVolume($('#volumeSliderGame').value/100);}
-
+  // clique sfx em TODOS os botões
   addBtnClickSound("button");
   </script>
 </body>
 </html>
+
 
   
     
