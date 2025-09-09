@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Metamatlética — Jogo da Memória v3.18</title>
+  <title>Metamatlética — Jogo da Memória v3.19</title>
   <style>
     :root{
       --bg:#060917;--bg2:#0a1030;--panel:#0c1331;--card:#0e163c;
@@ -11,6 +11,7 @@
       --radius:24px;--shadow:0 18px 50px rgba(0,0,0,.55)
     }
     *{box-sizing:border-box}
+    html,body{height:100%}
     body{
       margin:0;min-height:100dvh;display:flex;align-items:center;justify-content:center;
       font-family:Inter,ui-sans-serif,system-ui;background:
@@ -22,36 +23,72 @@
     .app{width:min(1150px,100%)}
     .glass{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));
       border:1px solid rgba(255,255,255,.15);backdrop-filter:blur(12px);border-radius:var(--radius);box-shadow:var(--shadow)}
-    .wrap{padding:20px;animation:fadeIn .7s ease}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+    .wrap{padding:20px;animation:fadeIn .6s ease}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+    .row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+    .col{flex:1 1 220px}
+
+    /* Botões */
     .btn{background:rgba(20,28,80,.85);border:1px solid #2a3a7a;color:var(--text);
-      padding:14px 16px;border-radius:16px;font-weight:800;cursor:pointer;
+      padding:12px 16px;border-radius:16px;font-weight:800;cursor:pointer;
       transition:.2s transform ease,.2s box-shadow ease}
     .btn:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(90,130,255,.35)}
-    .btn:active{transform:scale(.96)}
+    .btn:active{transform:scale(.97)}
     .btn.primary{background:linear-gradient(180deg,#9ec2ff,#5b86ff);color:#0a0f1e;border:none}
-    .row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+
+    /* Inputs temáticos */
+    select{width:100%;background:#0d163d;color:#e9eeff;border:1px solid #2a355a;
+      padding:12px 14px;border-radius:14px;font-weight:700;appearance:none;
+      background-image:linear-gradient(45deg,transparent 50%,#9ec2ff 50%),
+                       linear-gradient(135deg,#9ec2ff 50%,transparent 50%),
+                       linear-gradient(#0d163d,#0d163d);
+      background-position:calc(100% - 18px) calc(1em + 2px),calc(100% - 13px) calc(1em + 2px),100% 0;
+      background-size:5px 5px,5px 5px,2.8em 2.8em;background-repeat:no-repeat}
+    label.chk{display:flex;align-items:center;gap:10px;color:var(--muted);font-weight:700}
+    .chk input[type="checkbox"]{appearance:none;width:20px;height:20px;border-radius:6px;border:2px solid #4a6aff;
+      background:#0d163d;display:inline-grid;place-content:center;cursor:pointer}
+    .chk input[type="checkbox"]:checked{background:#4a6aff}
+    .chk input[type="checkbox"]::after{content:"";width:10px;height:10px;border-radius:3px;background:#dfe8ff;transform:scale(0);transition:.15s}
+    .chk input[type="checkbox"]:checked::after{transform:scale(1)}
+
     .screen{display:none}.screen.active{display:block}
-    .board{display:grid;gap:14px;padding:16px;border-radius:var(--radius);background:rgba(255,255,255,.03);
-      border:1px solid rgba(255,255,255,.12)}
-    .cols-5{grid-template-columns:repeat(5,1fr)}.cols-6{grid-template-columns:repeat(6,1fr)}
-    .tile{position:relative;aspect-ratio:3/4;border:none;border-radius:20px;overflow:hidden;cursor:pointer;perspective:1000px;outline:none}
+
+    /* Barra de jogo: duas áreas responsivas */
+    .gbar{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;margin-bottom:12px}
+    .gleft{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .gright{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+    .stat{background:rgba(12,20,56,.65);border:1px solid #243056;padding:10px 12px;border-radius:12px;font-size:14px}
+
+    /* Tabuleiro */
+    .board{display:grid;gap:14px;padding:16px;border-radius:var(--radius);
+      border:1px solid rgba(255,255,255,.12);background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03))}
+    .cols-5{grid-template-columns:repeat(5,1fr)} .cols-6{grid-template-columns:repeat(6,1fr)}
+    .tile{position:relative;aspect-ratio:3/4;border:none;border-radius:20px;overflow:hidden;cursor:pointer;perspective:1000px;outline:none;box-shadow:0 8px 18px rgba(0,0,0,.45)}
     .tile-inner{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.2,.8,.2,1)}
     .tile.flip .tile-inner{transform:rotateY(180deg)}
     .face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;border-radius:20px}
     .face.front{background:radial-gradient(120% 120% at 20% 0%, #1d2a63, #101944 70%);border:1px solid #2f3e89}
     .face.back{transform:rotateY(180deg);border:1px solid rgba(255,255,255,.25);
       background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04))}
-    .emoji{font-size:clamp(30px, 6.5vw, 54px)}
-    .gbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px}
-    .stat{background:rgba(12,20,56,.65);border:1px solid #243056;padding:10px 12px;border-radius:12px;font-size:14px}
+    .emoji{font-size:clamp(30px,6.5vw,54px)}
+
     .hint{margin:8px 0 12px;color:#d6deff;font-weight:800;letter-spacing:.2px;text-shadow:0 0 6px rgba(122,162,255,.5)}
-    /* slider estilizado */
-    .volume-wrap{display:flex;align-items:center;gap:8px;margin-top:10px}
+
+    /* Slider de volume */
+    .volume-wrap{display:flex;align-items:center;gap:8px}
     .slider{appearance:none;width:140px;height:8px;background:#2a3a7a;border-radius:999px;outline:none;transition:all .2s}
     .slider:hover{background:#4a6aff}
     .slider::-webkit-slider-thumb{appearance:none;width:18px;height:18px;background:#7aa2ff;border-radius:50%;cursor:pointer;box-shadow:0 0 6px #7aa2ff;transition:transform .2s}
     .slider::-webkit-slider-thumb:hover{transform:scale(1.15)}
+
+    /* Mobile tweaks */
+    @media (max-width:560px){
+      .btn{padding:11px 14px}
+      .gbar{grid-template-columns:1fr}
+      .gright{justify-content:flex-start}
+      .slider{width:120px}
+    }
   </style>
 </head>
 <body>
@@ -63,14 +100,14 @@
         <p class="muted">Escolha o tamanho e o tema e clique em <b>Jogar</b>.</p>
 
         <div class="row">
-          <div>
+          <div class="col">
             <label>Tamanho</label>
             <select id="deckSize">
               <option value="20">20 cartas (5×4)</option>
               <option value="30">30 cartas (6×5)</option>
             </select>
           </div>
-          <div>
+          <div class="col">
             <label>Tema</label>
             <select id="theme">
               <option value="cores">Cores</option>
@@ -79,12 +116,11 @@
           </div>
         </div>
 
-        <label class="row" style="margin-top:8px">
-          <input type="checkbox" id="cbPreview" checked>
-          Mostrar prévia de <b>5s</b> antes de começar
+        <label class="chk" style="margin:10px 0 6px">
+          <input type="checkbox" id="cbPreview" checked> Mostrar prévia de <b>5s</b> antes de começar
         </label>
 
-        <div class="row" style="margin-top:12px">
+        <div class="row" style="margin-top:10px">
           <button id="btnPlay" class="btn primary">🚀 Jogar</button>
           <button id="btnToggleSound" class="btn">🔈 Som: ON</button>
           <div class="volume-wrap">
@@ -98,7 +134,7 @@
     <section id="screen-game" class="screen">
       <div class="wrap glass">
         <div class="gbar">
-          <div class="row">
+          <div class="gleft">
             <button class="btn" id="btnBackInGame">← Lobby</button>
             <button class="btn" id="btnRestart">Reiniciar</button>
             <button class="btn" id="btnToggleSoundGame">🔈 Som: ON</button>
@@ -106,7 +142,7 @@
               <span>🔊</span><input type="range" id="volumeSliderGame" class="slider" min="0" max="100" value="70">
             </div>
           </div>
-          <div class="row">
+          <div class="gright">
             <div class="stat">⏱️ <b id="time">00:00</b></div>
             <div class="stat">🃏 <b id="moves">0</b> jogadas</div>
             <div class="stat">✅ <b id="pairs">0</b> pares</div>
@@ -135,15 +171,14 @@
   </div>
 
   <script>
-  // ------------- helpers
+  // helpers
   const $=s=>document.querySelector(s);
   const fmtTime=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
   const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 
-  // ------------- áudio
+  // audio
   const CLICK_URL="audio/Click.mp3";
   const GAME_MUSIC_URL="audio/Playground-Of-The-Stars-A.mp3";
-
   const AudioFX={
     inited:false, masterVol:0.7, music:null,
     init(){ if(this.inited) return; this.inited=true; },
@@ -153,43 +188,42 @@
     setVolume(v){ this.masterVol=v; if(this.music) this.music.volume=v; }
   };
 
-  // ------------- som ON/OFF + volume (persistência)
+  // som ON/OFF + volume (com persistência)
   const SND_KEY='mm_sound_on', VOL_KEY='mm_vol';
   let SOUND_ON = localStorage.getItem(SND_KEY)===null ? true : localStorage.getItem(SND_KEY)==='true';
   let VOLUME = localStorage.getItem(VOL_KEY) ? +localStorage.getItem(VOL_KEY) : 0.7;
 
   function syncVolumeUI(){
-    const val = Math.round(VOLUME*100);
-    if($('#volumeSlider')) $('#volumeSlider').value = val;
-    if($('#volumeSliderGame')) $('#volumeSliderGame').value = val;
+    const val=Math.round(VOLUME*100);
+    const vs1=$('#volumeSlider'), vs2=$('#volumeSliderGame');
+    if(vs1) vs1.value=val; if(vs2) vs2.value=val;
   }
   function setSound(on){
-    SOUND_ON = on; localStorage.setItem(SND_KEY, on?'true':'false');
-    $('#btnToggleSound').textContent = on ? '🔈 Som: ON' : '🔇 Som: OFF';
-    $('#btnToggleSoundGame').textContent = on ? '🔈 Som: ON' : '🔇 Som: OFF';
-    AudioFX.setVolume(on ? VOLUME : 0);
+    SOUND_ON=on; localStorage.setItem(SND_KEY,on?'true':'false');
+    $('#btnToggleSound').textContent=on?'🔈 Som: ON':'🔇 Som: OFF';
+    $('#btnToggleSoundGame').textContent=on?'🔈 Som: ON':'🔇 Som: OFF';
+    AudioFX.setVolume(on?VOLUME:0);
   }
   function setVolumeFromSlider(v){
-    VOLUME = Math.max(0, Math.min(1, v));
-    localStorage.setItem(VOL_KEY, VOLUME.toString());
-    AudioFX.setVolume(SOUND_ON ? VOLUME : 0);
+    VOLUME=Math.max(0,Math.min(1,v));
+    localStorage.setItem(VOL_KEY,VOLUME.toString());
+    AudioFX.setVolume(SOUND_ON?VOLUME:0);
     syncVolumeUI();
   }
 
-  // ------------- deck
+  // deck
   const FRUTAS=['🍎','🍌','🍇','🍓','🍍','🍑','🍉','🥝','🍐','🍒','🍊','🍈','🍋','🍏','🥥','🍅','🍆','🥕'];
-  function makeDeck(size, theme){
+  function makeDeck(size,theme){
     const pairs=Math.floor(size/2); let items=[];
     if(theme==='cores'){
-      // 15 cores únicas para 30 cartas (ou n pares), sem repetição
       for(let i=0;i<pairs;i++){ const h=(i*24)%360; items.push({t:'cor',v:`hsl(${h} 70% 55%)`}); }
     }else{
-      items = FRUTAS.slice(0,pairs).map(f=>({t:'emoji',v:f}));
+      items=FRUTAS.slice(0,pairs).map(f=>({t:'emoji',v:f}));
     }
-    return shuffle([...items, ...items]).map((x,i)=>({id:i,key:x.v,t:x.t,matched:false}));
+    return shuffle([...items,...items]).map((x,i)=>({id:i,key:x.v,t:x.t,matched:false}));
   }
 
-  // ------------- estado/jogo
+  // estado
   let G=null, timer=null, previewT=null;
   const screens={lobby:$('#screen-lobby'), game:$('#screen-game'), win:$('#screen-win')};
   function go(to){ Object.values(screens).forEach(s=>s.classList.remove('active')); screens[to].classList.add('active'); }
@@ -225,8 +259,8 @@
     }, seconds*1000);
   }
 
-  function newGame(size, theme){
-    G={size, theme, deck:makeDeck(size, theme), first:null, second:null, lock:false, moves:0, pairs:0, sec:0};
+  function newGame(size,theme){
+    G={size,theme,deck:makeDeck(size,theme),first:null,second:null,lock:false,moves:0,pairs:0,sec:0};
     $('#moves').textContent='0'; $('#pairs').textContent='0'; $('#time').textContent='00:00';
     buildBoard(); startTimer(); go('game'); AudioFX.playMusic(); startPreview(5);
   }
@@ -261,15 +295,16 @@
     $('#wPairs').textContent=G.pairs;
   }
 
-  // ------------- eventos UI
+  // click SFX em todos os botões
   function wireClickSfx(){
     document.querySelectorAll('button').forEach(b=>{
-      b.removeEventListener('__clickSfx', b.__clickSfxFn || (()=>{})); // limpeza
-      const fn=()=>AudioFX.playClick();
-      b.__clickSfxFn=fn; b.addEventListener('click', fn);
+      if(b.__sfxBound) return;
+      b.addEventListener('click',()=>AudioFX.playClick());
+      b.__sfxBound=true;
     });
   }
 
+  // eventos
   $('#btnPlay').onclick = ()=>{AudioFX.init(); setSound(SOUND_ON); newGame(+$('#deckSize').value,$('#theme').value);};
   $('#btnRestart').onclick = ()=>{ if(G) newGame(G.size, G.theme); };
   $('#btnBackInGame').onclick = ()=>{ stopTimer(); AudioFX.stopMusic(); go('lobby'); };
@@ -282,24 +317,17 @@
   $('#volumeSlider').oninput = e => setVolumeFromSlider(e.target.value/100);
   $('#volumeSliderGame').oninput = e => setVolumeFromSlider(e.target.value/100);
 
-  // ------------- inicialização + autoplay com fallback
+  // init + autoplay com fallback
   window.addEventListener('load', ()=>{
     AudioFX.init();
-    AudioFX.setVolume(SOUND_ON ? VOLUME : 0);
+    AudioFX.setVolume(SOUND_ON?VOLUME:0);
     syncVolumeUI();
     setSound(SOUND_ON);
     wireClickSfx();
 
-    // tentar autoplay ao carregar; se bloquear, tocar no primeiro clique
-    try{
-      AudioFX.playMusic();
-    }catch(_){}
+    try{ AudioFX.playMusic(); }catch(_){}
     document.addEventListener('click', ()=>{ if(!AudioFX.music) AudioFX.playMusic(); }, {once:true});
   });
-
-  // sempre reanexar sfx se algo mudar no DOM (segurança)
-  const mo=new MutationObserver(()=>wireClickSfx());
-  mo.observe(document.body,{childList:true,subtree:true});
   </script>
 </body>
 </html>
