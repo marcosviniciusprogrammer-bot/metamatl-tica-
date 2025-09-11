@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Metamatlética — Jogo da Memória v3.20 (Hard)</title>
+<title>Metamatlética — Modo Competitivo (6×6)</title>
 <style>
   :root{
     --bg:#060917; --bg2:#0a1030; --panel:#0c1331; --card:#0e163c;
@@ -12,7 +12,7 @@
   }
   *{box-sizing:border-box} html,body{height:100%}
   body{
-    margin:0; font-family:Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
     background:
       radial-gradient(1000px 700px at 5% -10%, #20307a55, transparent),
       radial-gradient(900px 700px at 110% -10%, #0f1f6a66, transparent),
@@ -26,8 +26,7 @@
   .wrap{ padding:20px }
   header{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:14px }
   h1{ margin:0; font-size:clamp(24px,5vw,44px); letter-spacing:.4px; text-shadow:0 0 10px rgba(122,162,255,.6)}
-  .tag{ background:rgba(122,162,255,.15); border:1px solid rgba(122,162,255,.4); padding:6px 12px; border-radius:14px; font-weight:700; letter-spacing:.4px; color:#d9e4ff }
-  .muted{ color:var(--muted) }
+  .tag{ background:rgba(122,162,255,.15); border:1px solid rgba(122,162,255,.4); padding:6px 12px; border-radius:14px; font-weight:700; color:#d9e4ff }
   .row{ display:flex; gap:14px; flex-wrap:wrap; align-items:center }
   .btn{ background:rgba(20,28,80,.85); border:1px solid #2a3a7a; color:var(--text);
     padding:14px 16px; border-radius:16px; font-weight:800; letter-spacing:.3px; cursor:pointer;
@@ -35,9 +34,9 @@
   .btn:hover{ transform:translateY(-2px); box-shadow:0 12px 28px rgba(90,130,255,.35) }
   .btn:active{ transform:translateY(0) scale(.97) }
   .btn.primary{ background:linear-gradient(180deg, #9ec2ff, #5b86ff); color:#0a0f1e; border:none }
-  .screen{ display:none } .screen.active{ display:block }
+  .muted{ color:var(--muted) }
 
-  /* Lobby */
+  /* lobby minimalista */
   .hero{ display:grid; grid-template-columns:1fr; gap:18px }
   .card{ padding:22px; border-radius:22px; background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04)); border:1px solid rgba(255,255,255,.15) }
   .vol{display:flex;align-items:center;gap:10px}
@@ -45,7 +44,7 @@
   .slider::-webkit-slider-thumb{appearance:none;width:18px;height:18px;background:#7aa2ff;border-radius:50%;box-shadow:0 0 6px #7aa2ff;cursor:pointer}
   @media (max-width:740px){ .slider{width:100%} }
 
-  /* Game */
+  /* game */
   .board{ display:grid; gap:12px; padding:16px; border-radius:var(--radius);
     border:1px solid rgba(255,255,255,.12); background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)); box-shadow:var(--shadow) }
   .cols-6{ grid-template-columns:repeat(6, 1fr)}
@@ -61,11 +60,11 @@
   .face.back{ transform:rotateY(180deg); border:1px solid rgba(255,255,255,.25); background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04)); font-size:clamp(28px,6.5vw,52px) }
   .hint{ margin:8px 0 12px; color:#d6deff; font-weight:800; letter-spacing:.2px; text-shadow:0 0 6px rgba(122,162,255,.5) }
 
-  /* Random events visual states */
+  /* estados dos eventos */
   .blackout .face.back{ filter:grayscale(1) brightness(.2); }
   .rot180{ transform:rotate(180deg); transition:transform .5s ease }
 
-  /* Win & event banner */
+  /* win & banner */
   .overlay{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; backdrop-filter: blur(10px); background: rgba(6,10,24,.6) }
   .overlay.show{ display:flex }
   .win-card{ background:#0f162b; border:1px solid #2a355a; padding:28px; border-radius:20px; text-align:center; max-width:640px; box-shadow:var(--shadow) }
@@ -80,18 +79,18 @@
   <header class="wrap">
     <div>
       <h1>Metamatlética — <span class="muted">Jogo da Memória</span></h1>
-      <div class="muted">Pensamento Computacional e Design de Jogos</div>
+      <div class="muted">Modo competitivo com eventos aleatórios</div>
     </div>
     <div class="tag">v3.20</div>
   </header>
 
-  <!-- LOBBY -->
+  <!-- LOBBY (SEM tamanho/tema/preview) -->
   <section id="screen-lobby" class="screen active">
     <div class="wrap glass">
       <div class="hero">
         <div class="card">
-          <h2>🎮 Metamatlética</h2>
-          <p>Modo competitivo: 36 cartas (6×6), frutas + emojis. Faça o menor tempo! ⏱️</p>
+          <h2>🎮 Modo Competitivo 6×6</h2>
+          <p>Frutas + emojis misturados (36 cartas). Faça o menor tempo! ⏱️</p>
         </div>
         <div class="card">
           <div class="row">
@@ -128,13 +127,13 @@
   <!-- WIN -->
   <div class="overlay" id="overlayWin" aria-hidden="true">
     <div class="win-card">
-      <h2 class="win-title"><span>👑</span> Você venceu! <span>👑</span></h2>
+      <h2 class="win-title">👑 Você venceu! 👑</h2>
       <div class="row" style="justify-content:center; gap:10px; margin:10px 0 6px">
         <div class="stat">⏱️ <b id="wTime">00:00</b></div>
         <div class="stat">✅ <b id="wPairs">0</b> pares</div>
         <div class="stat">🎯 <b id="wMoves">0</b> jogadas</div>
       </div>
-      <p class="muted" style="margin-top:6px">Desafio concluído! Tente bater o próprio tempo 😉</p>
+      <p class="muted">Desafio concluído! Tente bater o próprio tempo 😉</p>
       <div style="margin-top:10px">
         <button class="btn primary" id="btnPlayAgain">Jogar de novo</button>
         <button class="btn" id="btnBackFromWin">← Voltar ao Lobby</button>
@@ -142,21 +141,20 @@
     </div>
   </div>
 
-  <!-- Event banner -->
-  <div id="eventBanner" class="event-banner">❗ Evento: ...</div>
+  <!-- BANNER DE EVENTO -->
+  <div id="eventBanner" class="event-banner">❗ Evento</div>
 </div>
 
 <script>
-/* ===== helpers ===== */
+/* ==== helpers ==== */
 const $=s=>document.querySelector(s);
 const fmt=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]}return a};
 
-/* ===== audio: música procedural + sfx, autoplay-friendly ===== */
+/* ==== áudio procedural (autoplay-friendly) ==== */
 const AudioFX={
   ctx:null, master:null, inited:false,
-  musicBus:null, sfxBus:null, vol:0.7, soundOn:true,
-  padIv:null, arpIv:null,
+  musicBus:null, sfxBus:null, vol:0.7, soundOn:true, padIv:null, arpIv:null,
   init(){ if(this.inited) return;
     const AC=window.AudioContext||window.webkitAudioContext; this.ctx=new AC();
     this.master=this.ctx.createGain(); this.master.gain.value=this.vol;
@@ -175,7 +173,6 @@ const AudioFX={
   victory(){ [523,659,784,988,1046].forEach((f,i)=>setTimeout(()=>this.tone(f,.16,'sawtooth',.18),i*140)) },
   startMusic(){
     if(!this.inited) return;
-    // pad em acordes
     const chords=[[196,247,294],[220,277,330],[174,220,294],[196,247,330]]; let ci=0;
     const playPad=()=>{
       const now=this.ctx.currentTime, c=chords[ci%chords.length];
@@ -184,7 +181,6 @@ const AudioFX={
         g.gain.exponentialRampToValueAtTime(.22/(i+1), now+.22+i*0.05); g.gain.exponentialRampToValueAtTime(0.0001, now+5.6); o.stop(now+5.8);
       }); ci++; };
     playPad(); this.padIv=setInterval(playPad, 5600);
-    // arpejo
     const scale=[0,2,4,7,9]; let st=0;
     this.arpIv=setInterval(()=>{ const base=[196,220,174,196][(ci-1+4)%4];
       const f=base*Math.pow(2,(scale[st%scale.length]+12)/12);
@@ -197,24 +193,24 @@ const AudioFX={
 };
 function syncSoundUI(){
   const v=Math.round(AudioFX.vol*100);
-  $('#btnToggleSound').textContent = AudioFX.soundOn?'🔈 Som: ON':'🔇 Som: OFF';
-  $('#btnToggleSoundGame').textContent = AudioFX.soundOn?'🔈 Som: ON':'🔇 Som: OFF';
-  if($('#volumeSlider')) $('#volumeSlider').value=v;
+  if($('#btnToggleSound'))     $('#btnToggleSound').textContent     = AudioFX.soundOn?'🔈 Som: ON':'🔇 Som: OFF';
+  if($('#btnToggleSoundGame')) $('#btnToggleSoundGame').textContent = AudioFX.soundOn?'🔈 Som: ON':'🔇 Som: OFF';
+  if($('#volumeSlider'))     $('#volumeSlider').value=v;
   if($('#volumeSliderGame')) $('#volumeSliderGame').value=v;
 }
 
-/* ===== deck (36 cartas; frutas + emojis misturados) ===== */
-const EMOJIS = [
-  '🍎','🍌','🍇','🍓','🍍','🍑','🍉','🥝','🍐','🍒','🍊','🍋','🥥','🥭','🍅','🍈',
+/* ==== baralho fixo 6×6 (frutas + emojis) ==== */
+const EMOJIS=[
+  '🍎','🍌','🍇','🍓','🍍','🍑','🍉','🥝','🍐','🍒','🍊','🍋','🥥','🥭','🍈',
   '⭐','🌙','⚽','🏀','🎲','🎧','🎯','🎵','🚀','🧩','💎','🔥','❄️','🌈','🪙','🎁','🔔','🔑','🍪','☕'
-]; // 38 itens (usaremos os 18 primeiros pares)
+]; // 36+ itens
 function makeDeck(){
-  const pairs = 18; // 36 cartas
-  const base = EMOJIS.slice(0, pairs).map(e=>({t:'emoji', v:e}));
+  const pairs=18; // 36 cartas
+  const base=EMOJIS.slice(0,pairs).map(e=>({t:'emoji',v:e}));
   return shuffle([...base, ...base]).map((x,i)=>({id:i,key:x.v,t:x.t,matched:false}));
 }
 
-/* ===== state & UI ===== */
+/* ==== estados/telas ==== */
 const screens={lobby:$('#screen-lobby'), game:$('#screen-game')};
 function go(to){ Object.values(screens).forEach(s=>s.classList.remove('active')); screens[to].classList.add('active') }
 let G=null, timer=null, eventIv=null, previewTo=null;
@@ -235,24 +231,14 @@ function startTimer(){ if(timer) clearInterval(timer); timer=setInterval(()=>{ G
 function stopTimer(){ if(timer){ clearInterval(timer); timer=null } }
 function setHint(t){ $('#hint').textContent=t; }
 
-/* ===== random events engine (a cada 120s) ===== */
+/* ==== eventos aleatórios (a cada 120s) ==== */
 function showEvent(msg){ const b=$("#eventBanner"); b.textContent='❗ '+msg; b.classList.add('show'); setTimeout(()=>b.classList.remove('show'), 2000); }
-function eventBlackout(){
-  showEvent('Blackout: cartas apagadas por 5s');
-  $('#board').classList.add('blackout');
-  setTimeout(()=>$('#board').classList.remove('blackout'), 5000);
-}
-function eventRotate(){
-  showEvent('Tela invertida por 6s');
-  $('#gameWrap').classList.add('rot180');
-  setTimeout(()=>$('#gameWrap').classList.remove('rot180'), 6000);
-}
+function eventBlackout(){ showEvent('Blackout (5s)'); $('#board').classList.add('blackout'); setTimeout(()=>$('#board').classList.remove('blackout'),5000); }
+function eventRotate(){ showEvent('Tela invertida (6s)'); $('#gameWrap').classList.add('rot180'); setTimeout(()=>$('#gameWrap').classList.remove('rot180'),6000); }
 function eventShuffle(){
   showEvent('Embaralhamento!');
-  // reordena apenas as NÃO combinadas
-  const open = G.deck.map((c,idx)=>({c,idx})).filter(x=>!x.c.matched);
-  const vals = open.map(x=>x.c.key); shuffle(vals);
-  let k=0;
+  const open=G.deck.map((c,idx)=>({c,idx})).filter(x=>!x.c.matched);
+  const vals=open.map(x=>x.c.key); shuffle(vals); let k=0;
   G.deck.forEach(d=>{ if(!d.matched){ d.key=vals[k++]; } });
   buildBoard();
   // manter viradas das já feitas
@@ -260,37 +246,37 @@ function eventShuffle(){
   G.deck.forEach((c,i)=>{ if(c.matched) tiles[i].classList.add('flip'); });
 }
 function eventPartialReveal(){
-  if(G.pairs<2){ eventBlackout(); return; } // só após alguns pares
+  if(G.pairs<2){ eventBlackout(); return; }
   showEvent('Revelação parcial (5s)');
   const tiles=[...$('#board').children];
-  const idxs = tiles.map((_,i)=>i).filter(i=>!G.deck[i].matched);
+  const idxs=tiles.map((_,i)=>i).filter(i=>!G.deck[i].matched);
   shuffle(idxs);
-  const take = Math.max(3, Math.floor(idxs.length*0.3));
-  const chosen = idxs.slice(0,take);
+  const take=Math.max(3, Math.floor(idxs.length*0.3));
+  const chosen=idxs.slice(0,take);
   chosen.forEach(i=>tiles[i].classList.add('flip'));
-  setTimeout(()=>chosen.forEach(i=>{ if(!G.deck[i].matched) tiles[i].classList.remove('flip'); }), 5000);
+  setTimeout(()=>chosen.forEach(i=>{ if(!G.deck[i].matched) tiles[i].classList.remove('flip'); }),5000);
 }
 function startEventsClock(){
   if(eventIv) clearInterval(eventIv);
   eventIv=setInterval(()=>{
-    const r = Math.random();
+    const r=Math.random();
     if(r<0.25) eventBlackout();
     else if(r<0.5) eventShuffle();
     else if(r<0.75) eventRotate();
     else eventPartialReveal();
-  }, 120000); // 2 minutos
+  },120000);
 }
 function stopEventsClock(){ if(eventIv){ clearInterval(eventIv); eventIv=null } }
 
-/* ===== gameplay ===== */
+/* ==== gameplay ==== */
 function newGame(){
   G={ deck:makeDeck(), first:null, second:null, lock:false, moves:0, pairs:0, sec:0 };
   $('#moves').textContent='0'; $('#pairs').textContent='0'; $('#time').textContent='00:00';
   buildBoard(); go('game'); startTimer(); startEventsClock();
-  // prévia de 4s
+  // prévia 4s
   setHint('Memorize! Prévia de 4s 👀');
   const tiles=[...$('#board').children]; tiles.forEach(t=>t.classList.add('flip'));
-  previewTo=setTimeout(()=>{ tiles.forEach(t=>t.classList.remove('flip')); setHint('Escolha uma carta 👀'); }, 4000);
+  previewTo=setTimeout(()=>{ tiles.forEach(t=>t.classList.remove('flip')); setHint('Escolha uma carta 👀'); },4000);
 }
 function flip(i){
   if(G.lock || G.deck[i].matched || G.first===i) return;
@@ -306,14 +292,14 @@ function flip(i){
       setHint('Você acertou, parabéns! 🎉');
       G.first=null; G.second=null; G.lock=false;
       if(G.pairs===18) win(); else setTimeout(()=>setHint('Escolha uma carta 👀'), 500);
-    }, 320);
+    },320);
   }else{
     setTimeout(()=>{
       tiles[G.first].classList.remove('flip'); tiles[G.second].classList.remove('flip'); AudioFX.flipClose();
       setHint('Você errou, tente novamente! 🙄');
       G.first=null; G.second=null; G.lock=false;
-      setTimeout(()=>setHint('Escolha uma carta 👀'), 700);
-    }, 700);
+      setTimeout(()=>setHint('Escolha uma carta 👀'),700);
+    },700);
   }
 }
 function win(){
@@ -322,7 +308,7 @@ function win(){
   const ov=$('#overlayWin'); ov.classList.add('show'); ov.setAttribute('aria-hidden','false');
 }
 
-/* ===== bindings / ui ===== */
+/* ==== bind/UI ==== */
 function bindButtonSfx(){
   document.querySelectorAll('button').forEach(b=>{
     if(b.__b) return; b.addEventListener('click',()=>AudioFX.click(),{capture:true}); b.__b=true;
@@ -339,7 +325,7 @@ $('#btnToggleSoundGame').onclick = ()=> AudioFX.toggle();
 $('#volumeSlider').oninput = e => AudioFX.setVolume(e.target.value/100);
 $('#volumeSliderGame').oninput = e => AudioFX.setVolume(e.target.value/100);
 
-/* ===== init: autoplay + fallback ===== */
+/* ==== init (tenta autoplay; se bloquear, ativa no 1º clique) ==== */
 window.addEventListener('load', ()=>{
   AudioFX.init(); AudioFX.startMusic(); bindButtonSfx(); syncSoundUI();
   if(AudioFX.ctx.state==='suspended'){
@@ -351,8 +337,4 @@ window.addEventListener('load', ()=>{
 </body>
 </html>
 
-
-
-   
     
-
