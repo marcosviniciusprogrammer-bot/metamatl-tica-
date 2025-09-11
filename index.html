@@ -141,7 +141,6 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
           <div class="stat">🃏 <b id="moves">0</b> jogadas</div>
           <div class="stat">✅ <b id="pairs">0</b> pares</div>
           <div class="stat">🏆 <b id="score">0</b> pontos</div>
-          <!-- novo texto do botão -->
           <button class="btn small" id="btnReveal">🔍 Revelar cartas grátis 5s</button>
         </div>
         <div class="row" id="gameSoundRow">
@@ -386,11 +385,62 @@ function partialReveal(rate=0.3, seconds=5){
   setTimeout(()=>{ openIdx.forEach(i=>tiles[i].classList.remove('flip')); }, seconds*1000);
 }
 
-/* ========= botão Revelar (5s, uma vez) ========= */
-function revealAllOnce(){
-  if(G.revealUsed) return; G.revealUsed = true; $('#btnReveal').disabled = true;
-  const tiles = $('#board').children; [...tiles].forEach(t=>t.classList.add('flip'));
-  setTimeout(()=>{ [...tiles].forEach(t=>t.classList.remove('flip')); }, RULES.bonusRevealSeconds*1000);
+/* === NOVO: escolher 2 pares não resolvidos (máx. 4 cartas) === */
+function pickTwoUnmatchedPairs() {
+  const buckets = new Map(); // key -> [idx, idx]
+  G.deck.forEach((card, idx) => {
+    if (!card.matched) {
+      if (!buckets.has(card.key)) buckets.set(card.key, []);
+      buckets.get(card.key).push(idx);
+    }
+  });
+  const completePairs = [...buckets.values()].filter(list => list.length === 2);
+  for (let i = completePairs.length - 1; i > 0; i--) { // embaralha
+    const j = Math.floor(Math.random() * (i + 1));
+    [completePairs[i], completePairs[j]] = [completePairs[j], completePairs[i]];
+  }
+  return completePairs.slice(0, 2).flat(); // até 2 pares
+}
+
+/* ========= botão Revelar (5s, uma vez) — CORRIGIDO ========= */
+function revealAllOnce() {
+  if (G.revealUsed) return;
+
+  const btn = $('#btnReveal');
+  const tiles = $('#board').children;
+
+  const showIdx = pickTwoUnmatchedPairs();
+
+  // se não houver 2 pares sobrando, consome e avisa
+  if (showIdx.length === 0) {
+    G.revealUsed = true;
+    btn.disabled = true;
+    btn.textContent = 'Você não pode mais usar, boa sorte! 👀';
+    return;
+  }
+
+  G.revealUsed = true;
+  btn.disabled = true;
+  btn.textContent = 'Você não pode mais usar, boa sorte! 👀';
+
+  // guarda o que já estava aberto para não fechar depois
+  const alreadyOpen = new Set(
+    [...tiles].map((t, i) => t.classList.contains('flip') ? i : -1).filter(i => i >= 0)
+  );
+
+  G.lock = true;
+  showIdx.forEach(i => tiles[i].classList.add('flip'));
+  setHint('Dica bônus! 👀');
+
+  setTimeout(() => {
+    showIdx.forEach(i => {
+      if (!alreadyOpen.has(i) && !G.deck[i].matched) {
+        tiles[i].classList.remove('flip');
+      }
+    });
+    setHint('Escolha uma carta 👀');
+    G.lock = false;
+  }, RULES.bonusRevealSeconds * 1000);
 }
 
 /* ========= routing ========= */
@@ -424,3 +474,4 @@ window.addEventListener('load', ()=>{
 </script>
 </body>
 </html>
+
