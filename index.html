@@ -88,8 +88,13 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
 .eventDesc{color:var(--muted);margin:6px 0 0}
 
 /* Effects for events */
-.blackout{filter:brightness(0) saturate(0);transition:filter .2s}
-.inverted{transform:rotate(180deg);transition:transform .4s}
+#gameCard.blackout{filter:brightness(0.04) saturate(0);transition:filter .2s}
+#gameCard.blackout::after{
+  content:""; position:absolute; inset:0; border-radius:22px;
+  background:rgba(0,0,0,.35); pointer-events:none;
+}
+#gameCard.inverted{transform:rotate(180deg);transition:transform .4s}
+#gameCard.bw-mode{filter:grayscale(1) contrast(1.05) brightness(.92)}
 .recolor .face.back {transition:background-color .25s}
 
 @media (max-width:760px){ .slider{width:100%} }
@@ -100,7 +105,7 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
   <header class="wrap">
     <div>
       <h1>Metamatlética — jogo competitivo infantil
-        <small>Frutas + emojis misturados (<b>36 cartas</b>). Faça o menor tempo! ⏱️</small>
+        <small>Frutas + emojis misturados (<b>42 cartas</b>). Faça o menor tempo! ⏱️</small>
       </h1>
     </div>
     <div class="tag">v3.12</div>
@@ -111,7 +116,7 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
     <div class="wrap glass">
       <div class="hero">
         <div class="brand">
-          <h2>🎮 Modo Competitivo 6×6</h2>
+          <h2>🎮 Modo Competitivo 6×7</h2>
           <p>Comece quando estiver pronto. Os eventos surpresas deixam tudo imprevisível 😉</p>
         </div>
         <div class="controls">
@@ -217,7 +222,7 @@ const AudioFX = {
       const now=this.ctx.currentTime, ch=chords[k%chords.length];
       ch.forEach((f,i)=>{const o=this.ctx.createOscillator(), g=this.ctx.createGain();
         o.type='sine'; o.frequency.value=f; g.gain.value=.0001; o.connect(g); g.connect(this.musicBus);
-        o.start(now); g.gain.linearRampToValueAtTime(.18/(i+1), now+.25+i*.06); g.gain.exponentialRampToValueAtTime(.0001, now+5.3); o.stop(now+5.5);
+        o.start(now); g.gain.linearRampToValueAtTime(.18/(i+1), now+.25+i*.06); g.gain.exponentialRampToValueAtTime(0.0001, now+5.3); o.stop(now+5.5);
       }); k++; setTimeout(loop, 5200);
     }; loop();
   }
@@ -239,18 +244,18 @@ const RULES = {
   events: [
     {key:'reveal_partial',    weight:35, duration:6},
     {key:'shuffle_unmatched', weight:30, duration:3},
-    {key:'blackout',          weight:15, duration:3.5},
+    {key:'blackout',          weight:15, duration:3.8}, /* um pouco mais forte/longa */
     {key:'invert_board',      weight:10, duration:12},
-    {key:'recolor_board',     weight:10, duration:4}
+    {key:'recolor_board',     weight:10, duration:5}    /* p&b por mais tempo */
   ],
   eventMin: 45, eventMax: 70, jitter: 8, cooldown: 50, maxPerGame: 4
 };
 
-/* ========= deck (36 cartas) ========= */
-const POOL = ['🍎','🍌','🍇','🍓','🍍','🍑','🍉','🥝','🍐','🍒','🍊','🍈','🍋','🍏','🥥','🥭','⭐','🌙','⚡','🔥','❄️','🌈','💎','🎈','🎲','🎯','🎵','🛸','🧩','🚀','🧠','🪐','🧸','🎁','🍀','🎮'];
+/* ========= deck (42 cartas = 21 pares) ========= */
+const POOL = ['🍎','🍌','🍇','🍓','🍍','🍑','🍉','🥝','🍐','🍒','🍊','🍈','🍋','🍏','🥥','🥭','⭐','🌙','⚡','🔥','❄️','🌈','💎','🎈','🎲','🎯','🎵','🛸','🧩','🚀','🧠','🪐','🧸','🎁','🍀','🎮','🎧','⚽','🏀','🎹','🎪','🦄','🐱'];
 function sampleUnique(arr,n){ const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]} return a.slice(0,n); }
 function makeDeck(){
-  const pairs = 18; // 36 cartas (6×6)
+  const pairs = 21; // 42 cartas (6×7)
   const items = sampleUnique(POOL, pairs).map(v=>({t:'emoji',v}));
   return shuffle([...items, ...items]).map((x,i)=>({id:i,key:x.v,t:x.t,matched:false}));
 }
@@ -295,7 +300,7 @@ function newGame(){
   G = { deck:makeDeck(), first:null, second:null, lock:false, moves:0, pairs:0, sec:0, fastFlip:false, score:0, revealUsed:false };
   $('#moves').textContent='0'; $('#pairs').textContent='0'; $('#time').textContent='00:00'; $('#score').textContent='0';
   buildBoard(); startTimer(); preview(RULES.previewSeconds);
-  $('#btnReveal').disabled=false;
+  $('#btnReveal').disabled=false; $('#btnReveal').textContent='🔍 Revelar cartas grátis 5s';
   eventsFired=0; lastEvent=''; scheduleNextEvent(true);
 }
 function backToLobby(){
@@ -354,38 +359,71 @@ function triggerEvent(){
   if(eventsFired>=RULES.maxPerGame){ scheduleNextEvent(); return; }
   const ev = pickEvent(); lastEvent = ev.key; eventsFired++;
   const card = $('#gameCard');
+
   switch(ev.key){
     case 'blackout':
-      showEventOverlay('⚠️ Blackout!', 'Tudo escurece por alguns segundos…', ()=>{ card.classList.add('blackout'); setTimeout(()=>card.classList.remove('blackout'), ev.duration*1000); scheduleNextEvent(); }); break;
+      showEventOverlay('⚠️ Blackout!', 'Tudo escurece por alguns segundos…', ()=>{
+        G.lock = true;
+        card.classList.add('blackout');
+        setTimeout(()=>{ card.classList.remove('blackout'); G.lock = false; }, ev.duration*1000);
+        scheduleNextEvent();
+      }); break;
+
     case 'invert_board':
       showEventOverlay('⚠️ Mundo de cabeça pra baixo', `O tabuleiro fica invertido por ${ev.duration|0}s!`, ()=>{
+        G.lock = true;
         card.classList.add('inverted'); setHint('Calma! O tabuleiro está invertido 🔄');
-        setTimeout(()=>{ card.classList.remove('inverted'); setHint('Escolha uma carta 👀'); }, ev.duration*1000); scheduleNextEvent();
+        setTimeout(()=>{ card.classList.remove('inverted'); setHint('Escolha uma carta 👀'); G.lock=false; }, ev.duration*1000);
+        scheduleNextEvent();
       }); break;
+
     case 'shuffle_unmatched':
-      showEventOverlay('⚠️ Embaralhar!', 'Cartas não resolvidas trocam de lugar!', ()=>{ shuffleUnmatched(10); scheduleNextEvent(); }); break;
+      showEventOverlay('⚠️ Embaralhar!', 'Cartas não resolvidas trocam de lugar!', ()=>{
+        G.lock = true;
+        shuffleUnmatchedSafe();      // <<< corrigido
+        buildBoard();                // re-render para manter índices corretos
+        G.first = G.second = null;   // limpa seleção
+        G.lock = false;
+        scheduleNextEvent();
+      }); break;
+
     case 'recolor_board':
-      showEventOverlay('⚠️ Mudança de cores', 'As cartas mudam de cor rapidamente!', ()=>{ card.classList.add('recolor'); recolorBacks();
-        setTimeout(()=>card.classList.remove('recolor'), ev.duration*1000); scheduleNextEvent(); }); break;
+      showEventOverlay('⚠️ Preto & branco', 'Tudo fica P&B por alguns segundos!', ()=>{
+        G.lock = true;
+        card.classList.add('bw-mode');
+        setTimeout(()=>{ card.classList.remove('bw-mode'); G.lock = false; }, ev.duration*1000);
+        scheduleNextEvent();
+      }); break;
+
     case 'reveal_partial':
-      showEventOverlay('⚠️ Visão Rápida', `Algumas cartas serão reveladas por ${ev.duration|0}s!`, ()=>{ partialReveal(RULES.bonusCoverage, ev.duration); scheduleNextEvent(); }); break;
+      showEventOverlay('⚠️ Visão Rápida', `Algumas cartas serão reveladas por ${ev.duration|0}s!`, ()=>{
+        G.lock = true;
+        partialReveal(RULES.bonusCoverage, ev.duration);
+        setTimeout(()=>{ G.lock = false; }, ev.duration*1000);
+        scheduleNextEvent();
+      }); break;
   }
 }
-function shuffleUnmatched(swaps){
-  const b=$('#board'); const idxs=[...G.deck.keys()].filter(i=>!G.deck[i].matched);
-  for(let s=0;s<swaps;s++){ const a=idxs[rand(0,idxs.length-1)], c=idxs[rand(0,idxs.length-1)]; if(a===c) continue;
-    const A=b.children[a], C=b.children[c]; if(!A||!C) continue; b.insertBefore(C, A); b.insertBefore(A, b.children[c]);
-    [G.deck[a], G.deck[c]] = [G.deck[c], G.deck[a]];
-  }
+
+/* ======= helpers de evento ======= */
+/* embaralhamento seguro: mexe só no deck e reconstrói a UI */
+function shuffleUnmatchedSafe(){
+  const idxs = [...G.deck.keys()].filter(i=>!G.deck[i].matched);
+  const cards = idxs.map(i=>G.deck[i]);
+  shuffle(cards);
+  idxs.forEach((pos,k)=>{ G.deck[pos] = cards[k]; });
 }
-function recolorBacks(){ const backs = $('#board').querySelectorAll('.face.back'); backs.forEach((el,i)=>{ el.style.background = `hsl(${(i*37)%360} 60% 52%)`; }); }
+function recolorBacks(){ /* (mantido caso queira usar efeitos por cor no futuro) */
+  const backs = $('#board').querySelectorAll('.face.back');
+  backs.forEach((el,i)=>{ el.style.background = `hsl(${(i*37)%360} 60% 52%)`; });
+}
 function partialReveal(rate=0.3, seconds=5){
   const openIdx = [], tiles = $('#board').children, unmatched = [...G.deck.keys()].filter(i=>!G.deck[i].matched); shuffle(unmatched);
   const showN = Math.max(1, Math.floor(unmatched.length*rate)); for(let i=0;i<showN;i++){ const k=unmatched[i]; tiles[k].classList.add('flip'); openIdx.push(k); }
   setTimeout(()=>{ openIdx.forEach(i=>tiles[i].classList.remove('flip')); }, seconds*1000);
 }
 
-/* === NOVO: escolher 2 pares não resolvidos (máx. 4 cartas) === */
+/* === escolher 2 pares não resolvidos (máx. 4 cartas) === */
 function pickTwoUnmatchedPairs() {
   const buckets = new Map(); // key -> [idx, idx]
   G.deck.forEach((card, idx) => {
@@ -395,14 +433,14 @@ function pickTwoUnmatchedPairs() {
     }
   });
   const completePairs = [...buckets.values()].filter(list => list.length === 2);
-  for (let i = completePairs.length - 1; i > 0; i--) { // embaralha
+  for (let i = completePairs.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [completePairs[i], completePairs[j]] = [completePairs[j], completePairs[i]];
   }
-  return completePairs.slice(0, 2).flat(); // até 2 pares
+  return completePairs.slice(0, 2).flat();
 }
 
-/* ========= botão Revelar (5s, uma vez) — CORRIGIDO ========= */
+/* ========= botão Revelar (5s, uma vez) — permanece corrigido ========= */
 function revealAllOnce() {
   if (G.revealUsed) return;
 
@@ -411,7 +449,6 @@ function revealAllOnce() {
 
   const showIdx = pickTwoUnmatchedPairs();
 
-  // se não houver 2 pares sobrando, consome e avisa
   if (showIdx.length === 0) {
     G.revealUsed = true;
     btn.disabled = true;
@@ -423,7 +460,6 @@ function revealAllOnce() {
   btn.disabled = true;
   btn.textContent = 'Você não pode mais usar, boa sorte! 👀';
 
-  // guarda o que já estava aberto para não fechar depois
   const alreadyOpen = new Set(
     [...tiles].map((t, i) => t.classList.contains('flip') ? i : -1).filter(i => i >= 0)
   );
@@ -474,4 +510,5 @@ window.addEventListener('load', ()=>{
 </script>
 </body>
 </html>
+
 
