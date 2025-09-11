@@ -42,10 +42,6 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
 .btn.primary{background:linear-gradient(180deg,#9ec2ff,#5b86ff);color:#0a0f1e;border:none}
 .btn.small{padding:10px 12px;border-radius:12px;font-weight:900}
 .row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
-select{
-  width:100%;background:#0d163d;color:#e9eeff;border:1px solid #2a355a;
-  padding:12px 14px;border-radius:14px;font-weight:700
-}
 .screen{display:none}.screen.active{display:block}
 
 /* lobby card */
@@ -104,7 +100,7 @@ select{
   <header class="wrap">
     <div>
       <h1>Metamatlética — jogo competitivo infantil
-        <small>Frutas + emojis misturados (**42 cartas**). Faça o menor tempo! ⏱️</small>
+        <small>Frutas + emojis misturados (<b>36 cartas</b>). Faça o menor tempo! ⏱️</small>
       </h1>
     </div>
     <div class="tag">v3.12</div>
@@ -115,7 +111,7 @@ select{
     <div class="wrap glass">
       <div class="hero">
         <div class="brand">
-          <h2>🎮 Modo Competitivo 6×?</h2>
+          <h2>🎮 Modo Competitivo 6×6</h2>
           <p>Comece quando estiver pronto. Os eventos surpresas deixam tudo imprevisível 😉</p>
         </div>
         <div class="controls">
@@ -145,7 +141,8 @@ select{
           <div class="stat">🃏 <b id="moves">0</b> jogadas</div>
           <div class="stat">✅ <b id="pairs">0</b> pares</div>
           <div class="stat">🏆 <b id="score">0</b> pontos</div>
-          <button class="btn small" id="btnReveal">🔍 Revelar (5s)</button>
+          <!-- novo texto do botão -->
+          <button class="btn small" id="btnReveal">🔍 Revelar cartas grátis 5s</button>
         </div>
         <div class="row" id="gameSoundRow">
           <button class="btn" id="btnToggleSoundGame">🔈 Som: ON</button>
@@ -188,7 +185,7 @@ const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.ran
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const rand=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
 
-/* ========= audio (procedural, sem arquivos) ========= */
+/* ========= audio ========= */
 const AudioFX = {
   ctx:null, master:null, inited:false, musicBus:null, sfxBus:null, vol:.7, soundOn:true,
   init(){
@@ -208,15 +205,6 @@ const AudioFX = {
     o.connect(g); g.connect(this.sfxBus); o.start(t);
     o.frequency.exponentialRampToValueAtTime(1200,t+.05); g.gain.exponentialRampToValueAtTime(0.0001,t+.08); o.stop(t+.09);
   },
-  suspense(){ // “whoosh” curto
-    const t=this.ctx.currentTime;
-    const n=this.ctx.createBuffer(1,this.ctx.sampleRate*.6,this.ctx.sampleRate);
-    const d=n.getChannelData(0); for(let i=0;i<d.length;i++){ const x=i/d.length; d[i]=(Math.random()*2-1)*Math.pow(1-x,2); }
-    const src=this.ctx.createBufferSource(); src.buffer=n;
-    const f=this.ctx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=3000;
-    const g=this.ctx.createGain(); g.gain.value=.001; src.connect(f); f.connect(g); g.connect(this.sfxBus);
-    src.start(); g.gain.exponentialRampToValueAtTime(.35,t+.08); g.gain.exponentialRampToValueAtTime(0.0001,t+.6);
-  },
   tone(freq=800,dur=.07,type='sine',gain=.1){
     if(!this.inited) return; const o=this.ctx.createOscillator(), g=this.ctx.createGain();
     o.type=type; o.frequency.value=freq; g.gain.value=gain; o.connect(g); g.connect(this.sfxBus);
@@ -225,8 +213,7 @@ const AudioFX = {
   flipOpen(){ this.tone(760,.07,'sine',.12) }, flipClose(){ this.tone(340,.09,'sine',.12) },
   match(){ this.tone(880,.08,'triangle',.14); setTimeout(()=>this.tone(1320,.09,'triangle',.14), 70); },
   victory(){ [523,659,784,988,1046,1318,1567].forEach((f,i)=>setTimeout(()=>this.tone(f,.15,'triangle',.15),170*i)); },
-  _startMusic(){ // pad simples contínuo
-    const chords=[[196,247,294],[220,277,330],[174,220,294],[196,247,330]]; let k=0;
+  _startMusic(){ const chords=[[196,247,294],[220,277,330],[174,220,294],[196,247,330]]; let k=0;
     const loop=()=>{ if(!this.inited) return;
       const now=this.ctx.currentTime, ch=chords[k%chords.length];
       ch.forEach((f,i)=>{const o=this.ctx.createOscillator(), g=this.ctx.createGain();
@@ -245,30 +232,26 @@ function syncSoundButtons(){
   if($('#volumeSliderGame')) $('#volumeSliderGame').value=v;
 }
 
-/* ========= regras (eventos mais cedo e mais longos) ========= */
+/* ========= regras ========= */
 const RULES = {
   previewSeconds: 4,
   bonusRevealSeconds: 5,
   bonusCoverage: .30,
   events: [
-    {key:'reveal_partial',    weight:35, duration:6},    // +1s
-    {key:'shuffle_unmatched', weight:30, duration:3},    // +1s
-    {key:'blackout',          weight:15, duration:3.5},  // +1s
-    {key:'invert_board',      weight:10, duration:12},   // +2s
-    {key:'recolor_board',     weight:10, duration:4}     // +1s
+    {key:'reveal_partial',    weight:35, duration:6},
+    {key:'shuffle_unmatched', weight:30, duration:3},
+    {key:'blackout',          weight:15, duration:3.5},
+    {key:'invert_board',      weight:10, duration:12},
+    {key:'recolor_board',     weight:10, duration:4}
   ],
-  eventMin: 45,  // antes 100
-  eventMax: 70,  // antes 120
-  jitter:   8,
-  cooldown: 50,
-  maxPerGame: 4
+  eventMin: 45, eventMax: 70, jitter: 8, cooldown: 50, maxPerGame: 4
 };
 
-/* ========= deck (42 cartas: frutas + emojis aleatórios) ========= */
+/* ========= deck (36 cartas) ========= */
 const POOL = ['🍎','🍌','🍇','🍓','🍍','🍑','🍉','🥝','🍐','🍒','🍊','🍈','🍋','🍏','🥥','🥭','⭐','🌙','⚡','🔥','❄️','🌈','💎','🎈','🎲','🎯','🎵','🛸','🧩','🚀','🧠','🪐','🧸','🎁','🍀','🎮'];
 function sampleUnique(arr,n){ const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]} return a.slice(0,n); }
 function makeDeck(){
-  const pairs = 21; // 42 cartas (6 colunas × 7 linhas)
+  const pairs = 18; // 36 cartas (6×6)
   const items = sampleUnique(POOL, pairs).map(v=>({t:'emoji',v}));
   return shuffle([...items, ...items]).map((x,i)=>({id:i,key:x.v,t:x.t,matched:false}));
 }
@@ -283,7 +266,7 @@ function updateScore(){
   G.score = pts; $('#score').textContent = pts;
 }
 
-/* ========= UI build ========= */
+/* ========= UI ========= */
 function buildBoard(){
   const b=$('#board'); b.innerHTML='';
   G.deck.forEach((c,i)=>{
@@ -297,49 +280,29 @@ function buildBoard(){
     b.appendChild(el);
   });
 }
-function startTimer(){
-  if(timer) clearInterval(timer);
-  timer=setInterval(()=>{ G.sec++; $('#time').textContent=fmtTime(G.sec); updateScore(); },1000);
-}
+function startTimer(){ if(timer) clearInterval(timer); timer=setInterval(()=>{ G.sec++; $('#time').textContent=fmtTime(G.sec); updateScore(); },1000); }
 function stopTimer(){ if(timer){clearInterval(timer); timer=null} }
 
 /* ========= preview ========= */
 function preview(seconds){
-  G.lock=true;
-  [...$('#board').children].forEach(t=>t.classList.add('flip'));
-  setHint('Boa sorte! 👀');
-  setTimeout(()=>{
-    [...$('#board').children].forEach(t=>t.classList.remove('flip'));
-    G.lock=false; setHint('Escolha uma carta 👀');
-  }, seconds*1000);
+  G.lock=true; [...$('#board').children].forEach(t=>t.classList.add('flip')); setHint('Boa sorte! 👀');
+  setTimeout(()=>{ [...$('#board').children].forEach(t=>t.classList.remove('flip')); G.lock=false; setHint('Escolha uma carta 👀'); }, seconds*1000);
 }
 
 /* ========= game start/stop ========= */
 function newGame(){
-  // esconder controles do lobby
-  $('#btnPlay').style.display='none';
-  $('#btnToggleSound').style.display='none';
-  $('#volumeSlider').closest('.vol').style.display='none';
-
-  // ir pro game
+  $('#btnPlay').style.display='none'; $('#btnToggleSound').style.display='none'; $('#volumeSlider').closest('.vol').style.display='none';
   go('game');
   G = { deck:makeDeck(), first:null, second:null, lock:false, moves:0, pairs:0, sec:0, fastFlip:false, score:0, revealUsed:false };
   $('#moves').textContent='0'; $('#pairs').textContent='0'; $('#time').textContent='00:00'; $('#score').textContent='0';
   buildBoard(); startTimer(); preview(RULES.previewSeconds);
   $('#btnReveal').disabled=false;
-
-  // zera barra e agenda primeiro evento
   eventsFired=0; lastEvent=''; scheduleNextEvent(true);
 }
 function backToLobby(){
   stopTimer(); stopEventLoop();
-  // mostrar controles de lobby novamente
-  $('#btnPlay').style.display='inline-block';
-  $('#btnToggleSound').style.display='inline-block';
-  $('#volumeSlider').closest('.vol').style.display='flex';
-  go('lobby');
-  // reset barras
-  $('#lobbyEventFill').style.width='0%';
+  $('#btnPlay').style.display='inline-block'; $('#btnToggleSound').style.display='inline-block'; $('#volumeSlider').closest('.vol').style.display='flex';
+  go('lobby'); $('#lobbyEventFill').style.width='0%';
 }
 
 /* ========= flips ========= */
@@ -347,29 +310,17 @@ function flip(i){
   if(G.lock || G.deck[i].matched || G.first===i) return;
   const tiles=$('#board').children;
   tiles[i].classList.add('flip'); AudioFX.flipOpen();
-
-  if(G.first==null){
-    G.first=i; setHint('Escolha outra carta 👀'); return;
-  }
+  if(G.first==null){ G.first=i; setHint('Escolha outra carta 👀'); return; }
   G.second=i; G.lock=true; G.moves++; $('#moves').textContent=G.moves; updateScore();
   const a=G.deck[G.first], b=G.deck[G.second];
   if(a.key===b.key){
     a.matched=b.matched=true; G.pairs++; $('#pairs').textContent=G.pairs; AudioFX.match(); updateScore();
-    setTimeout(()=>{
-      setHint('Você acertou, parabéns! 🎉');
-      G.first=null; G.second=null; G.lock=false;
-      if(G.pairs===totalPairs()) return win();
-      setTimeout(()=>setHint('Escolha uma carta 👀'), 450);
-    }, 300);
+    setTimeout(()=>{ setHint('Você acertou, parabéns! 🎉'); G.first=null; G.second=null; G.lock=false;
+      if(G.pairs===totalPairs()) return win(); setTimeout(()=>setHint('Escolha uma carta 👀'), 450); }, 300);
   }else{
     const closeDelay = G.fastFlip ? 420 : 700;
-    setTimeout(()=>{
-      tiles[G.first].classList.remove('flip');
-      tiles[G.second].classList.remove('flip');
-      AudioFX.flipClose(); setHint('Você errou, tente novamente! 🙄');
-      G.first=null; G.second=null; G.lock=false;
-      setTimeout(()=>setHint('Escolha uma carta 👀'), 700);
-    }, closeDelay);
+    setTimeout(()=>{ tiles[G.first].classList.remove('flip'); tiles[G.second].classList.remove('flip'); AudioFX.flipClose();
+      setHint('Você errou, tente novamente! 🙄'); G.first=null; G.second=null; G.lock=false; setTimeout(()=>setHint('Escolha uma carta 👀'), 700); }, closeDelay);
   }
 }
 
@@ -380,122 +331,65 @@ function win(){
   const ov=$('#overlayWin'); ov.classList.add('show'); ov.setAttribute('aria-hidden','false');
 }
 
-/* ========= event system ========= */
+/* ========= eventos ========= */
 function stopEventLoop(){ if(eventTimer){ clearInterval(eventTimer); eventTimer=null } }
-
 function scheduleNextEvent(isFirst=false){
   const base = rand(RULES.eventMin, RULES.eventMax);
   const t = clamp(base + rand(-RULES.jitter, RULES.jitter), RULES.eventMin-10, RULES.eventMax+10);
   eventTargetSec = t; eventElapsed = 0;
   updateEventFill(0, isFirst? '#lobbyEventFill' : '#gameEventFill');
-
   if(eventTimer) clearInterval(eventTimer);
-  eventTimer = setInterval(()=>{
-    eventElapsed += .2;
-    const p = Math.min(100, (eventElapsed / eventTargetSec) * 100);
-    updateEventFill(p, '#gameEventFill');
-    if(p>=100){
-      clearInterval(eventTimer); eventTimer=null;
-      triggerEvent();
-    }
-  }, 200);
+  eventTimer = setInterval(()=>{ eventElapsed += .2; const p = Math.min(100, (eventElapsed / eventTargetSec) * 100);
+    updateEventFill(p, '#gameEventFill'); if(p>=100){ clearInterval(eventTimer); eventTimer=null; triggerEvent(); } }, 200);
 }
 function updateEventFill(p, sel){ const el=$(sel); if(el) el.style.width=p+'%'; }
-
-function pickEvent(){
-  const pool = RULES.events.filter(e=>e.key!==lastEvent);
-  const sum = pool.reduce((s,e)=>s+e.weight,0);
-  let r=Math.random()*sum;
-  for(const e of pool){ if((r-=e.weight)<=0) return e; }
-  return pool[0];
-}
-
+function pickEvent(){ const pool = RULES.events.filter(e=>e.key!==lastEvent); const sum = pool.reduce((s,e)=>s+e.weight,0);
+  let r=Math.random()*sum; for(const e of pool){ if((r-=e.weight)<=0) return e; } return pool[0]; }
 function showEventOverlay(title, desc, onGo){
-  $('#eventTitle').textContent = title;
-  $('#eventDesc').textContent  = desc;
+  $('#eventTitle').textContent = title; $('#eventDesc').textContent  = desc;
   const ov = $('#eventOverlay'); ov.classList.add('show'); ov.setAttribute('aria-hidden','false');
-  AudioFX.suspense();
   const go = ()=>{ ov.classList.remove('show'); ov.setAttribute('aria-hidden','true'); $('#eventGo').removeEventListener('click',go); onGo && onGo(); };
   $('#eventGo').addEventListener('click', go);
 }
-
 function triggerEvent(){
   if(eventsFired>=RULES.maxPerGame){ scheduleNextEvent(); return; }
   const ev = pickEvent(); lastEvent = ev.key; eventsFired++;
-
   const card = $('#gameCard');
   switch(ev.key){
     case 'blackout':
-      showEventOverlay('⚠️ Blackout!', 'Tudo escurece por alguns segundos…', ()=>{
-        card.classList.add('blackout');
-        setTimeout(()=>card.classList.remove('blackout'), ev.duration*1000);
-        scheduleNextEvent();
-      });
-      break;
+      showEventOverlay('⚠️ Blackout!', 'Tudo escurece por alguns segundos…', ()=>{ card.classList.add('blackout'); setTimeout(()=>card.classList.remove('blackout'), ev.duration*1000); scheduleNextEvent(); }); break;
     case 'invert_board':
       showEventOverlay('⚠️ Mundo de cabeça pra baixo', `O tabuleiro fica invertido por ${ev.duration|0}s!`, ()=>{
-        card.classList.add('inverted');
-        setHint('Calma! O tabuleiro está invertido 🔄');
-        setTimeout(()=>{ card.classList.remove('inverted'); setHint('Escolha uma carta 👀'); }, ev.duration*1000);
-        scheduleNextEvent();
-      });
-      break;
+        card.classList.add('inverted'); setHint('Calma! O tabuleiro está invertido 🔄');
+        setTimeout(()=>{ card.classList.remove('inverted'); setHint('Escolha uma carta 👀'); }, ev.duration*1000); scheduleNextEvent();
+      }); break;
     case 'shuffle_unmatched':
-      showEventOverlay('⚠️ Embaralhar!', 'Cartas não resolvidas trocam de lugar!', ()=>{
-        shuffleUnmatched(10);
-        scheduleNextEvent();
-      });
-      break;
+      showEventOverlay('⚠️ Embaralhar!', 'Cartas não resolvidas trocam de lugar!', ()=>{ shuffleUnmatched(10); scheduleNextEvent(); }); break;
     case 'recolor_board':
-      showEventOverlay('⚠️ Mudança de cores', 'As cartas mudam de cor rapidamente!', ()=>{
-        card.classList.add('recolor'); recolorBacks();
-        setTimeout(()=>card.classList.remove('recolor'), ev.duration*1000);
-        scheduleNextEvent();
-      });
-      break;
+      showEventOverlay('⚠️ Mudança de cores', 'As cartas mudam de cor rapidamente!', ()=>{ card.classList.add('recolor'); recolorBacks();
+        setTimeout(()=>card.classList.remove('recolor'), ev.duration*1000); scheduleNextEvent(); }); break;
     case 'reveal_partial':
-      showEventOverlay('⚠️ Visão Rápida', `Algumas cartas serão reveladas por ${ev.duration|0}s!`, ()=>{
-        partialReveal(RULES.bonusCoverage, ev.duration);
-        scheduleNextEvent();
-      });
-      break;
+      showEventOverlay('⚠️ Visão Rápida', `Algumas cartas serão reveladas por ${ev.duration|0}s!`, ()=>{ partialReveal(RULES.bonusCoverage, ev.duration); scheduleNextEvent(); }); break;
   }
 }
-
-/* === event helpers === */
 function shuffleUnmatched(swaps){
-  const b=$('#board');
-  const idxs=[...G.deck.keys()].filter(i=>!G.deck[i].matched);
-  for(let s=0;s<swaps;s++){
-    const a=idxs[rand(0,idxs.length-1)], c=idxs[rand(0,idxs.length-1)];
-    if(a===c) continue;
-    const A=b.children[a], C=b.children[c]; if(!A||!C) continue;
-    b.insertBefore(C, A);
-    b.insertBefore(A, b.children[c]);
+  const b=$('#board'); const idxs=[...G.deck.keys()].filter(i=>!G.deck[i].matched);
+  for(let s=0;s<swaps;s++){ const a=idxs[rand(0,idxs.length-1)], c=idxs[rand(0,idxs.length-1)]; if(a===c) continue;
+    const A=b.children[a], C=b.children[c]; if(!A||!C) continue; b.insertBefore(C, A); b.insertBefore(A, b.children[c]);
     [G.deck[a], G.deck[c]] = [G.deck[c], G.deck[a]];
   }
 }
-function recolorBacks(){
-  const backs = $('#board').querySelectorAll('.face.back');
-  backs.forEach((el,i)=>{ el.style.background = `hsl(${(i*37)%360} 60% 52%)`; });
-}
+function recolorBacks(){ const backs = $('#board').querySelectorAll('.face.back'); backs.forEach((el,i)=>{ el.style.background = `hsl(${(i*37)%360} 60% 52%)`; }); }
 function partialReveal(rate=0.3, seconds=5){
-  const openIdx = [];
-  const tiles = $('#board').children;
-  const unmatched = [...G.deck.keys()].filter(i=>!G.deck[i].matched);
-  shuffle(unmatched);
-  const showN = Math.max(1, Math.floor(unmatched.length*rate));
-  for(let i=0;i<showN;i++){ const k=unmatched[i]; tiles[k].classList.add('flip'); openIdx.push(k); }
+  const openIdx = [], tiles = $('#board').children, unmatched = [...G.deck.keys()].filter(i=>!G.deck[i].matched); shuffle(unmatched);
+  const showN = Math.max(1, Math.floor(unmatched.length*rate)); for(let i=0;i<showN;i++){ const k=unmatched[i]; tiles[k].classList.add('flip'); openIdx.push(k); }
   setTimeout(()=>{ openIdx.forEach(i=>tiles[i].classList.remove('flip')); }, seconds*1000);
 }
 
 /* ========= botão Revelar (5s, uma vez) ========= */
 function revealAllOnce(){
-  if(G.revealUsed) return;
-  G.revealUsed = true;
-  $('#btnReveal').disabled = true;
-  const tiles = $('#board').children;
-  [...tiles].forEach(t=>t.classList.add('flip'));
+  if(G.revealUsed) return; G.revealUsed = true; $('#btnReveal').disabled = true;
+  const tiles = $('#board').children; [...tiles].forEach(t=>t.classList.add('flip'));
   setTimeout(()=>{ [...tiles].forEach(t=>t.classList.remove('flip')); }, RULES.bonusRevealSeconds*1000);
 }
 
@@ -524,9 +418,8 @@ window.addEventListener('load', ()=>{
     document.addEventListener('click',resume,{once:true});
   }
   syncSoundButtons();
-
   // barra do lobby: preenchimento contínuo apenas visual
-  let p=0; const iv=setInterval(()=>{ p=(p+1)%101; $('#lobbyEventFill').style.width=p+'%'; },120);
+  let p=0; setInterval(()=>{ p=(p+1)%101; $('#lobbyEventFill').style.width=p+'%'; },120);
 });
 </script>
 </body>
