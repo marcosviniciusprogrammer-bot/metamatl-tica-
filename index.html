@@ -1,102 +1,135 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Metamatlética — Modo Competitivo (6×6)</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Metamatlética — jogo competitivo infantil</title>
 <style>
-  :root{
-    --bg:#060917; --bg2:#0a1030; --panel:#0c1331; --card:#0e163c;
-    --muted:#a7b0c7; --text:#f2f6ff; --accent:#7aa2ff;
-    --radius:24px; --shadow:0 18px 50px rgba(0,0,0,.55)
-  }
-  *{box-sizing:border-box} html,body{height:100%}
-  body{
-    margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
-    background:
-      radial-gradient(1000px 700px at 5% -10%, #20307a55, transparent),
-      radial-gradient(900px 700px at 110% -10%, #0f1f6a66, transparent),
-      linear-gradient(180deg, var(--bg), var(--bg2));
-    color:var(--text); display:flex; align-items:center; justify-content:center; padding:22px
-  }
-  .app{ width:min(1150px,100%)}
-  .glass{ background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
-    border:1px solid rgba(255,255,255,.15); backdrop-filter: blur(12px);
-    border-radius:var(--radius); box-shadow:var(--shadow) }
-  .wrap{ padding:20px }
-  header{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:14px }
-  h1{ margin:0; font-size:clamp(24px,5vw,44px); letter-spacing:.4px; text-shadow:0 0 10px rgba(122,162,255,.6)}
-  .tag{ background:rgba(122,162,255,.15); border:1px solid rgba(122,162,255,.4); padding:6px 12px; border-radius:14px; font-weight:700; color:#d9e4ff }
-  .row{ display:flex; gap:14px; flex-wrap:wrap; align-items:center }
-  .btn{ background:rgba(20,28,80,.85); border:1px solid #2a3a7a; color:var(--text);
-    padding:14px 16px; border-radius:16px; font-weight:800; letter-spacing:.3px; cursor:pointer;
-    transition:.18s transform ease,.18s box-shadow ease }
-  .btn:hover{ transform:translateY(-2px); box-shadow:0 12px 28px rgba(90,130,255,.35) }
-  .btn:active{ transform:translateY(0) scale(.97) }
-  .btn.primary{ background:linear-gradient(180deg, #9ec2ff, #5b86ff); color:#0a0f1e; border:none }
-  .muted{ color:var(--muted) }
+:root{
+  --bg:#060917;--bg2:#0a1030;--panel:#0c1331;--card:#0e163c;
+  --muted:#a7b0c7;--text:#f2f6ff;--accent:#7aa2ff;
+  --radius:24px;--shadow:0 18px 50px rgba(0,0,0,.55)
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;font-family:Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background:
+    radial-gradient(1000px 700px at 5% -10%, #20307a55, transparent),
+    radial-gradient(900px 700px at 110% -10%, #0f1f6a66, transparent),
+    linear-gradient(180deg, var(--bg), var(--bg2));
+  color:var(--text);display:flex;align-items:center;justify-content:center;padding:20px
+}
+.app{width:min(1100px,100%)}
+.glass{
+  background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+  border:1px solid rgba(255,255,255,.15); backdrop-filter: blur(12px);
+  border-radius:var(--radius); box-shadow:var(--shadow); animation:fadeIn .6s ease
+}
+@keyframes fadeIn{from{opacity:.0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.wrap{padding:20px}
+header{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+h1{margin:0;font-size:clamp(24px,4.8vw,42px);letter-spacing:.4px;text-shadow:0 0 10px rgba(122,162,255,.6)}
+h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,2.8vw,16px)}
+.tag{background:rgba(122,162,255,.15);border:1px solid rgba(122,162,255,.4);padding:6px 12px;border-radius:14px;font-weight:700;color:#d9e4ff}
+.btn{
+  background:rgba(20,28,80,.9);border:1px solid #2a3a7a;color:var(--text);
+  padding:14px 16px;border-radius:16px;font-weight:800;letter-spacing:.3px;cursor:pointer;
+  transition:.18s transform,.18s box-shadow
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(90,130,255,.35)}
+.btn:active{transform:translateY(0) scale(.97)}
+.btn.primary{background:linear-gradient(180deg,#9ec2ff,#5b86ff);color:#0a0f1e;border:none}
+.row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+select{
+  width:100%;background:#0d163d;color:#e9eeff;border:1px solid #2a355a;
+  padding:12px 14px;border-radius:14px;font-weight:700
+}
+.screen{display:none}.screen.active{display:block}
 
-  /* lobby minimalista */
-  .hero{ display:grid; grid-template-columns:1fr; gap:18px }
-  .card{ padding:22px; border-radius:22px; background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04)); border:1px solid rgba(255,255,255,.15) }
-  .vol{display:flex;align-items:center;gap:10px}
-  .slider{appearance:none;width:200px;height:8px;background:#2a3a7a;border-radius:999px;outline:none}
-  .slider::-webkit-slider-thumb{appearance:none;width:18px;height:18px;background:#7aa2ff;border-radius:50%;box-shadow:0 0 6px #7aa2ff;cursor:pointer}
-  @media (max-width:740px){ .slider{width:100%} }
+/* lobby card */
+.hero{display:grid;grid-template-columns:1fr;gap:18px}
+.brand{padding:22px;border-radius:22px;position:relative;overflow:hidden;
+  background: radial-gradient(120% 120% at -10% -20%, rgba(122,162,255,.25), transparent),
+              linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+  border:1px solid rgba(255,255,255,.15);box-shadow:0 30px 60px rgba(12,20,56,.45), inset 0 0 40px rgba(122,162,255,.15);
+}
+.brand h2{margin:0 0 6px;font-size:clamp(22px,4.4vw,36px)}
+.brand p{margin:8px 0 0;color:var(--muted)}
+.controls{padding:18px;border-radius:22px;background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.15)}
+.vol{display:flex;align-items:center;gap:10px}
+.slider{appearance:none;width:220px;max-width:60vw;height:8px;background:#2a3a7a;border-radius:999px;outline:none}
+.slider::-webkit-slider-thumb{appearance:none;width:18px;height:18px;background:#7aa2ff;border-radius:50%;box-shadow:0 0 6px #7aa2ff;cursor:pointer}
 
-  /* game */
-  .board{ display:grid; gap:12px; padding:16px; border-radius:var(--radius);
-    border:1px solid rgba(255,255,255,.12); background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)); box-shadow:var(--shadow) }
-  .cols-6{ grid-template-columns:repeat(6, 1fr)}
-  .gbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-bottom:12px }
-  .hud{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  .stat{ background:rgba(12,20,56,.65); border:1px solid #243056; padding:10px 12px; border-radius:12px; font-size:14px }
-  .tile{ position:relative; aspect-ratio:3/4; border:none; border-radius:20px; overflow:hidden; cursor:pointer;
-    perspective:1000px; outline:none; box-shadow:0 10px 22px rgba(0,0,0,.4) }
-  .tile-inner{ position:absolute; inset:0; transform-style:preserve-3d; transition:transform .5s cubic-bezier(.2,.8,.2,1) }
-  .tile.flip .tile-inner{ transform:rotateY(180deg) }
-  .face{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; backface-visibility:hidden; border-radius:20px }
-  .face.front{ background:radial-gradient(120% 120% at 20% 0%, #1d2a63, #101944 70%); border:1px solid #2f3e89 }
-  .face.back{ transform:rotateY(180deg); border:1px solid rgba(255,255,255,.25); background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04)); font-size:clamp(28px,6.5vw,52px) }
-  .hint{ margin:8px 0 12px; color:#d6deff; font-weight:800; letter-spacing:.2px; text-shadow:0 0 6px rgba(122,162,255,.5) }
+/* game HUD */
+.gbar{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.stat{background:rgba(12,20,56,.65);border:1px solid #243056;padding:10px 12px;border-radius:12px;font-size:14px}
+.hint{margin:8px 0 12px;color:#d6deff;font-weight:800;letter-spacing:.2px;text-shadow:0 0 6px rgba(122,162,255,.5)}
 
-  /* estados dos eventos */
-  .blackout .face.back{ filter:grayscale(1) brightness(.2); }
-  .rot180{ transform:rotate(180deg); transition:transform .5s ease }
+/* board */
+.board{display:grid;gap:12px;padding:16px;border-radius:22px;border:1px solid rgba(255,255,255,.12);
+  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));box-shadow:var(--shadow)}
+.cols-6{grid-template-columns:repeat(6,1fr)}
+.tile{position:relative;aspect-ratio:3/4;border:none;border-radius:18px;overflow:hidden;cursor:pointer;perspective:1000px;outline:none;box-shadow:0 10px 22px rgba(0,0,0,.4)}
+.tile-inner{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.tile.flip .tile-inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;border-radius:18px}
+.face.front{background:radial-gradient(120% 120% at 20% 0%, #1d2a63, #101944 70%);border:1px solid #2f3e89}
+.face.back{transform:rotateY(180deg);border:1px solid rgba(255,255,255,.25);
+  background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));font-size:clamp(28px,7vw,48px)}
+/* color token */
+.dot{width:60%;height:60%;border-radius:16px;box-shadow:inset 0 0 0 4px rgba(255,255,255,.22)}
 
-  /* win & banner */
-  .overlay{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; backdrop-filter: blur(10px); background: rgba(6,10,24,.6) }
-  .overlay.show{ display:flex }
-  .win-card{ background:#0f162b; border:1px solid #2a355a; padding:28px; border-radius:20px; text-align:center; max-width:640px; box-shadow:var(--shadow) }
-  .win-title{ display:flex; align-items:center; justify-content:center; gap:10px; font-size:clamp(26px,4.5vw,36px); font-weight:800 }
-  .event-banner{ position:fixed; top:14px; left:50%; transform:translateX(-50%); background:#0f162b; border:1px solid #2a355a; color:#fff; padding:12px 18px; border-radius:16px; box-shadow:var(--shadow); font-weight:900; letter-spacing:.3px; display:none }
-  .event-banner.show{ display:block; animation:pulse .7s ease 0s 3 }
-  @keyframes pulse{0%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.06)}100%{transform:translateX(-50%) scale(1)}}
+/* event bar */
+.eventBar{height:10px;border-radius:999px;background:#17204a;border:1px solid #2a3a7a;overflow:hidden}
+.eventFill{height:100%;width:0%;background:linear-gradient(90deg,#6fa3ff,#9ec2ff);box-shadow:0 0 12px #6fa3ff inset;transition:width .2s linear}
+
+/* event overlay */
+.overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(4,8,22,.65);backdrop-filter:blur(8px);z-index:50}
+.overlay.show{display:flex}
+.eventCard{background:#0f162b;border:1px solid #2a355a;border-radius:22px;padding:26px;max-width:560px;text-align:center;animation:pop .4s ease}
+@keyframes pop{from{transform:scale(.94);opacity:.4}to{transform:scale(1);opacity:1}}
+.eventTitle{font-size:clamp(22px,5vw,30px);font-weight:900;margin:0}
+.eventDesc{color:var(--muted);margin:6px 0 0}
+
+/* Effects for events */
+.blackout{filter:brightness(0) saturate(0);transition:filter .2s}
+.inverted{transform:rotate(180deg);transition:transform .4s}
+.recolor .face.back {transition:background-color .25s}
+
+@media (max-width:760px){ .slider{width:100%} }
 </style>
 </head>
 <body>
 <div class="app">
   <header class="wrap">
     <div>
-      <h1>Metamatlética — <span class="muted">Jogo da Memória</span></h1>
-      <div class="muted">Modo competitivo com eventos aleatórios</div>
+      <h1>Metamatlética — jogo competitivo infantil
+        <small>Frutas + emojis misturados (36 cartas). Faça o menor tempo! ⏱️</small>
+      </h1>
     </div>
-    <div class="tag">v3.20</div>
+    <div class="tag">v3.12</div>
   </header>
 
-  <!-- LOBBY (SEM tamanho/tema/preview) -->
+  <!-- LOBBY -->
   <section id="screen-lobby" class="screen active">
     <div class="wrap glass">
       <div class="hero">
-        <div class="card">
+        <div class="brand">
           <h2>🎮 Modo Competitivo 6×6</h2>
-          <p>Frutas + emojis misturados (36 cartas). Faça o menor tempo! ⏱️</p>
+          <p>Comece quando estiver pronto. Os eventos surpresas deixam tudo imprevisível 😉</p>
         </div>
-        <div class="card">
+        <div class="controls">
           <div class="row">
             <button id="btnPlay" class="btn primary">🚀 Jogar</button>
             <button id="btnToggleSound" class="btn">🔈 Som: ON</button>
             <div class="vol"><span>🔊</span><input id="volumeSlider" class="slider" type="range" min="0" max="100" value="70"></div>
+          </div>
+          <div style="margin-top:12px">
+            <div class="eventBar" title="Próximo evento">
+              <div id="lobbyEventFill" class="eventFill"></div>
+            </div>
+            <div class="muted" style="margin-top:6px;font-size:14px">Barra de evento (mostra quando o 1º evento vai chegar)</div>
           </div>
         </div>
       </div>
@@ -105,233 +138,384 @@
 
   <!-- GAME -->
   <section id="screen-game" class="screen">
-    <div class="wrap glass" id="gameWrap">
+    <div class="wrap glass" id="gameCard">
       <div class="gbar">
-        <div class="hud">
+        <div class="row">
           <button class="btn" id="btnBackInGame">← Lobby</button>
           <div class="stat">⏱️ <b id="time">00:00</b></div>
-        </div>
-        <div class="hud">
           <div class="stat">🃏 <b id="moves">0</b> jogadas</div>
           <div class="stat">✅ <b id="pairs">0</b> pares</div>
-          <button class="btn" id="btnRestart">Reiniciar</button>
+        </div>
+        <div class="row" id="gameSoundRow">
           <button class="btn" id="btnToggleSoundGame">🔈 Som: ON</button>
           <div class="vol"><span>🔊</span><input id="volumeSliderGame" class="slider" type="range" min="0" max="100" value="70"></div>
         </div>
       </div>
-      <div class="hint" id="hint">Memorize! Prévia de 4s 👀</div>
+      <div class="eventBar"><div id="gameEventFill" class="eventFill"></div></div>
+      <div class="hint" id="hint">Boa sorte! 👀</div>
       <div id="board" class="board cols-6"></div>
     </div>
   </section>
 
-  <!-- WIN -->
-  <div class="overlay" id="overlayWin" aria-hidden="true">
-    <div class="win-card">
-      <h2 class="win-title">👑 Você venceu! 👑</h2>
-      <div class="row" style="justify-content:center; gap:10px; margin:10px 0 6px">
-        <div class="stat">⏱️ <b id="wTime">00:00</b></div>
-        <div class="stat">✅ <b id="wPairs">0</b> pares</div>
-        <div class="stat">🎯 <b id="wMoves">0</b> jogadas</div>
-      </div>
-      <p class="muted">Desafio concluído! Tente bater o próprio tempo 😉</p>
-      <div style="margin-top:10px">
-        <button class="btn primary" id="btnPlayAgain">Jogar de novo</button>
-        <button class="btn" id="btnBackFromWin">← Voltar ao Lobby</button>
-      </div>
+  <!-- EVENT OVERLAY -->
+  <div id="eventOverlay" class="overlay" aria-hidden="true">
+    <div class="eventCard">
+      <h3 class="eventTitle" id="eventTitle">!</h3>
+      <p class="eventDesc" id="eventDesc"></p>
+      <div style="margin-top:10px"><button id="eventGo" class="btn primary">Começar!</button></div>
     </div>
   </div>
 
-  <!-- BANNER DE EVENTO -->
-  <div id="eventBanner" class="event-banner">❗ Evento</div>
+  <!-- WIN -->
+  <div class="overlay" id="overlayWin" aria-hidden="true">
+    <div class="eventCard">
+      <h3 class="eventTitle">👑 Você venceu!</h3>
+      <p class="eventDesc"><span id="wTime">00:00</span> • <span id="wMoves">0</span> jogadas • <span id="wPairs">0</span> pares</p>
+      <div style="margin-top:10px" class="row">
+        <button class="btn primary" id="btnPlayAgain">Jogar de novo</button>
+        <button class="btn" id="btnBackFromWin">← Lobby</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-/* ==== helpers ==== */
-const $=s=>document.querySelector(s);
-const fmt=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
-const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]}return a};
+/* ========= helpers ========= */
+const $ = s => document.querySelector(s);
+const fmtTime = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]} return a }
 
-/* ==== áudio procedural (autoplay-friendly) ==== */
-const AudioFX={
-  ctx:null, master:null, inited:false,
-  musicBus:null, sfxBus:null, vol:0.7, soundOn:true, padIv:null, arpIv:null,
-  init(){ if(this.inited) return;
-    const AC=window.AudioContext||window.webkitAudioContext; this.ctx=new AC();
+/* ========= audio (procedural, sem arquivos) ========= */
+const AudioFX = {
+  ctx:null, master:null, inited:false, musicBus:null, sfxBus:null, vol:.7, soundOn:true,
+  init(){
+    if(this.inited) return;
+    const AC=window.AudioContext||window.webkitAudioContext;
+    this.ctx = new AC();
     this.master=this.ctx.createGain(); this.master.gain.value=this.vol;
-    this.musicBus=this.ctx.createGain(); this.musicBus.gain.value=.55;
+    this.musicBus=this.ctx.createGain(); this.musicBus.gain.value=.45;
     this.sfxBus=this.ctx.createGain(); this.sfxBus.gain.value=1.0;
     this.musicBus.connect(this.master); this.sfxBus.connect(this.master); this.master.connect(this.ctx.destination);
-    this.inited=true;
+    this.inited=true; this._startMusic();
   },
-  setVolume(v){ this.vol=v; if(this.master) this.master.gain.value=this.soundOn?v:0; syncSoundUI(); },
-  toggle(){ this.soundOn=!this.soundOn; if(this.master) this.master.gain.value=this.soundOn?this.vol:0; syncSoundUI(); },
-  tone(f=800,d=.08,t='sine',g=.12){ if(!this.inited) return; const o=this.ctx.createOscillator(), gg=this.ctx.createGain();
-    o.type=t; o.frequency.value=f; gg.gain.value=g; o.connect(gg); gg.connect(this.sfxBus);
-    const now=this.ctx.currentTime; o.start(now); gg.gain.exponentialRampToValueAtTime(0.0001, now+d); o.stop(now+d); },
-  click(){ this.tone(760,.06,'triangle',.16) }, flipOpen(){ this.tone(720,.07,'sine',.14) },
-  flipClose(){ this.tone(340,.09,'sine',.14) }, match(){ this.tone(880,.09,'triangle',.16); setTimeout(()=>this.tone(1320,.1,'triangle',.16),70) },
-  victory(){ [523,659,784,988,1046].forEach((f,i)=>setTimeout(()=>this.tone(f,.16,'sawtooth',.18),i*140)) },
-  startMusic(){
-    if(!this.inited) return;
-    const chords=[[196,247,294],[220,277,330],[174,220,294],[196,247,330]]; let ci=0;
-    const playPad=()=>{
-      const now=this.ctx.currentTime, c=chords[ci%chords.length];
-      c.forEach((f,i)=>{const o=this.ctx.createOscillator(), g=this.ctx.createGain(); o.type='sine'; o.frequency.value=f;
-        g.gain.value=0.0001; o.connect(g); g.connect(this.musicBus); o.start(now);
-        g.gain.exponentialRampToValueAtTime(.22/(i+1), now+.22+i*0.05); g.gain.exponentialRampToValueAtTime(0.0001, now+5.6); o.stop(now+5.8);
-      }); ci++; };
-    playPad(); this.padIv=setInterval(playPad, 5600);
-    const scale=[0,2,4,7,9]; let st=0;
-    this.arpIv=setInterval(()=>{ const base=[196,220,174,196][(ci-1+4)%4];
-      const f=base*Math.pow(2,(scale[st%scale.length]+12)/12);
-      const o=this.ctx.createOscillator(), g=this.ctx.createGain(); o.type='triangle'; o.frequency.value=f; g.gain.value=0.0001;
-      o.connect(g); g.connect(this.musicBus); const t=this.ctx.currentTime; o.start(t);
-      g.gain.linearRampToValueAtTime(.08,t+.02); g.gain.exponentialRampToValueAtTime(0.0001,t+.35); o.stop(t+.36); st++;
-    },420);
+  setVolume(v){ this.vol=v; if(this.master) this.master.gain.value=this.soundOn? v : 0 },
+  toggleSound(){ this.soundOn=!this.soundOn; if(this.master) this.master.gain.value=this.soundOn? this.vol : 0; syncSoundButtons(); },
+  click(){ if(!this.inited) return; const t=this.ctx.currentTime;
+    const o=this.ctx.createOscillator(), g=this.ctx.createGain(); o.type='triangle'; o.frequency.value=700; g.gain.value=.17;
+    o.connect(g); g.connect(this.sfxBus); o.start(t);
+    o.frequency.exponentialRampToValueAtTime(1200,t+.05); g.gain.exponentialRampToValueAtTime(0.0001,t+.08); o.stop(t+.09);
   },
-  stopMusic(){ if(this.padIv){clearInterval(this.padIv); this.padIv=null} if(this.arpIv){clearInterval(this.arpIv); this.arpIv=null} }
+  suspense(){ // “whoosh” curto
+    const t=this.ctx.currentTime;
+    const n=this.ctx.createBuffer(1,this.ctx.sampleRate*.6,this.ctx.sampleRate);
+    const d=n.getChannelData(0); for(let i=0;i<d.length;i++){ const x=i/d.length; d[i]=(Math.random()*2-1)*Math.pow(1-x,2); }
+    const src=this.ctx.createBufferSource(); src.buffer=n;
+    const f=this.ctx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=3000;
+    const g=this.ctx.createGain(); g.gain.value=.001; src.connect(f); f.connect(g); g.connect(this.sfxBus);
+    src.start(); g.gain.exponentialRampToValueAtTime(.35,t+.08); g.gain.exponentialRampToValueAtTime(0.0001,t+.6);
+  },
+  tone(freq=800,dur=.07,type='sine',gain=.1){
+    if(!this.inited) return; const o=this.ctx.createOscillator(), g=this.ctx.createGain();
+    o.type=type; o.frequency.value=freq; g.gain.value=gain; o.connect(g); g.connect(this.sfxBus);
+    const t=this.ctx.currentTime; o.start(t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.stop(t+dur);
+  },
+  flipOpen(){ this.tone(760,.07,'sine',.12) }, flipClose(){ this.tone(340,.09,'sine',.12) },
+  match(){ this.tone(880,.08,'triangle',.14); setTimeout(()=>this.tone(1320,.09,'triangle',.14), 70); },
+  victory(){ [523,659,784,988,1046,1318,1567].forEach((f,i)=>setTimeout(()=>this.tone(f,.15,'triangle',.15),170*i)); },
+  _startMusic(){ // pad simples contínuo
+    const chords=[[196,247,294],[220,277,330],[174,220,294],[196,247,330]]; let k=0;
+    const loop=()=>{
+      const now=this.ctx.currentTime, ch=chords[k%chords.length];
+      ch.forEach((f,i)=>{const o=this.ctx.createOscillator(), g=this.ctx.createGain();
+        o.type='sine'; o.frequency.value=f; g.gain.value=.0001; o.connect(g); g.connect(this.musicBus);
+        o.start(now); g.gain.linearRampToValueAtTime(.18/(i+1), now+.25+i*.06); g.gain.exponentialRampToValueAtTime(.0001, now+5.3); o.stop(now+5.5);
+      }); k++; setTimeout(loop, 5200);
+    }; loop();
+  }
 };
-function syncSoundUI(){
-  const v=Math.round(AudioFX.vol*100);
-  if($('#btnToggleSound'))     $('#btnToggleSound').textContent     = AudioFX.soundOn?'🔈 Som: ON':'🔇 Som: OFF';
-  if($('#btnToggleSoundGame')) $('#btnToggleSoundGame').textContent = AudioFX.soundOn?'🔈 Som: ON':'🔇 Som: OFF';
-  if($('#volumeSlider'))     $('#volumeSlider').value=v;
+function syncSoundButtons(){
+  const t = AudioFX.soundOn ? '🔈 Som: ON' : '🔇 Som: OFF';
+  if($('#btnToggleSound')) $('#btnToggleSound').textContent=t;
+  if($('#btnToggleSoundGame')) $('#btnToggleSoundGame').textContent=t;
+  const v = Math.round(AudioFX.vol*100);
+  if($('#volumeSlider')) $('#volumeSlider').value=v;
   if($('#volumeSliderGame')) $('#volumeSliderGame').value=v;
 }
 
-/* ==== baralho fixo 6×6 (frutas + emojis) ==== */
-const EMOJIS=[
-  '🍎','🍌','🍇','🍓','🍍','🍑','🍉','🥝','🍐','🍒','🍊','🍋','🥥','🥭','🍈',
-  '⭐','🌙','⚽','🏀','🎲','🎧','🎯','🎵','🚀','🧩','💎','🔥','❄️','🌈','🪙','🎁','🔔','🔑','🍪','☕'
-]; // 36+ itens
+/* ========= regras ========= */
+const RULES = {
+  previewSeconds: 4,
+  bonusRevealSeconds: 5,
+  bonusCoverage: .30,
+  events: [
+    {key:'reveal_partial', weight:35, duration:5},
+    {key:'shuffle_unmatched', weight:30, duration:2},
+    {key:'blackout', weight:15, duration:2.5},
+    {key:'invert_board', weight:10, duration:10},
+    {key:'recolor_board', weight:10, duration:3}
+  ],
+  eventMin:100, eventMax:120, jitter:15, cooldown:60, maxPerGame:3
+};
+
+/* ========= deck (36 cartas: frutas + emojis) ========= */
+const POOL = ['🍎','🍌','🍇','🍓','🍍','🍑','🍉','🥝','🍐','🍒','🍊','🍈','🍋','🍏','🥥','🥭','🍅','🍆','🥕','⭐','🌙','⚡','🔥','❄️','🌈','💎','🎈','🎲','🎯'];
 function makeDeck(){
-  const pairs=18; // 36 cartas
-  const base=EMOJIS.slice(0,pairs).map(e=>({t:'emoji',v:e}));
-  return shuffle([...base, ...base]).map((x,i)=>({id:i,key:x.v,t:x.t,matched:false}));
+  const pairs = 18; // 36 cartas
+  const items = POOL.slice(0,pairs).map(v=>({t:'emoji',v}));
+  return shuffle([...items, ...items]).map((x,i)=>({id:i,key:x.v,t:x.t,matched:false}));
 }
 
-/* ==== estados/telas ==== */
-const screens={lobby:$('#screen-lobby'), game:$('#screen-game')};
-function go(to){ Object.values(screens).forEach(s=>s.classList.remove('active')); screens[to].classList.add('active') }
-let G=null, timer=null, eventIv=null, previewTo=null;
+/* ========= state ========= */
+let G = null, timer=null;
+let eventTimer=null, eventTargetSec=0, eventElapsed=0, lastEvent='', eventsFired=0;
 
+function setHint(msg){ $('#hint').textContent = msg; }
+
+/* ========= UI build ========= */
 function buildBoard(){
   const b=$('#board'); b.innerHTML='';
   G.deck.forEach((c,i)=>{
     const el=document.createElement('button'); el.className='tile'; el.dataset.i=i;
     const inner=document.createElement('div'); inner.className='tile-inner';
     const front=document.createElement('div'); front.className='face front';
-    const back=document.createElement('div'); back.className='face back'; back.textContent=c.key;
+    const back=document.createElement('div'); back.className='face back';
+    if(c.t==='emoji'){ back.textContent=c.key; }
     inner.appendChild(front); inner.appendChild(back); el.appendChild(inner);
     el.addEventListener('click',()=>flip(i));
     b.appendChild(el);
   });
 }
-function startTimer(){ if(timer) clearInterval(timer); timer=setInterval(()=>{ G.sec++; $('#time').textContent=fmt(G.sec); },1000) }
-function stopTimer(){ if(timer){ clearInterval(timer); timer=null } }
-function setHint(t){ $('#hint').textContent=t; }
+function startTimer(){
+  if(timer) clearInterval(timer);
+  timer=setInterval(()=>{ G.sec++; $('#time').textContent=fmtTime(G.sec); },1000);
+}
+function stopTimer(){ if(timer){clearInterval(timer); timer=null} }
 
-/* ==== eventos aleatórios (a cada 120s) ==== */
-function showEvent(msg){ const b=$("#eventBanner"); b.textContent='❗ '+msg; b.classList.add('show'); setTimeout(()=>b.classList.remove('show'), 2000); }
-function eventBlackout(){ showEvent('Blackout (5s)'); $('#board').classList.add('blackout'); setTimeout(()=>$('#board').classList.remove('blackout'),5000); }
-function eventRotate(){ showEvent('Tela invertida (6s)'); $('#gameWrap').classList.add('rot180'); setTimeout(()=>$('#gameWrap').classList.remove('rot180'),6000); }
-function eventShuffle(){
-  showEvent('Embaralhamento!');
-  const open=G.deck.map((c,idx)=>({c,idx})).filter(x=>!x.c.matched);
-  const vals=open.map(x=>x.c.key); shuffle(vals); let k=0;
-  G.deck.forEach(d=>{ if(!d.matched){ d.key=vals[k++]; } });
-  buildBoard();
-  // manter viradas das já feitas
-  const tiles=$('#board').children;
-  G.deck.forEach((c,i)=>{ if(c.matched) tiles[i].classList.add('flip'); });
+/* ========= preview ========= */
+function preview(seconds){
+  G.lock=true;
+  [...$('#board').children].forEach(t=>t.classList.add('flip'));
+  setHint('Boa sorte! 👀');
+  setTimeout(()=>{
+    [...$('#board').children].forEach(t=>t.classList.remove('flip'));
+    G.lock=false; setHint('Escolha uma carta 👀');
+  }, seconds*1000);
 }
-function eventPartialReveal(){
-  if(G.pairs<2){ eventBlackout(); return; }
-  showEvent('Revelação parcial (5s)');
-  const tiles=[...$('#board').children];
-  const idxs=tiles.map((_,i)=>i).filter(i=>!G.deck[i].matched);
-  shuffle(idxs);
-  const take=Math.max(3, Math.floor(idxs.length*0.3));
-  const chosen=idxs.slice(0,take);
-  chosen.forEach(i=>tiles[i].classList.add('flip'));
-  setTimeout(()=>chosen.forEach(i=>{ if(!G.deck[i].matched) tiles[i].classList.remove('flip'); }),5000);
-}
-function startEventsClock(){
-  if(eventIv) clearInterval(eventIv);
-  eventIv=setInterval(()=>{
-    const r=Math.random();
-    if(r<0.25) eventBlackout();
-    else if(r<0.5) eventShuffle();
-    else if(r<0.75) eventRotate();
-    else eventPartialReveal();
-  },120000);
-}
-function stopEventsClock(){ if(eventIv){ clearInterval(eventIv); eventIv=null } }
 
-/* ==== gameplay ==== */
+/* ========= game start/stop ========= */
 function newGame(){
-  G={ deck:makeDeck(), first:null, second:null, lock:false, moves:0, pairs:0, sec:0 };
+  // esconder controles do lobby
+  $('#btnPlay').style.display='none';
+  $('#btnToggleSound').style.display='none';
+  $('#volumeSlider').closest('.vol').style.display='none';
+
+  // ir pro game
+  go('game');
+  G = { deck:makeDeck(), first:null, second:null, lock:false, moves:0, pairs:0, sec:0, fastFlip:false };
   $('#moves').textContent='0'; $('#pairs').textContent='0'; $('#time').textContent='00:00';
-  buildBoard(); go('game'); startTimer(); startEventsClock();
-  // prévia 4s
-  setHint('Memorize! Prévia de 4s 👀');
-  const tiles=[...$('#board').children]; tiles.forEach(t=>t.classList.add('flip'));
-  previewTo=setTimeout(()=>{ tiles.forEach(t=>t.classList.remove('flip')); setHint('Escolha uma carta 👀'); },4000);
+  buildBoard(); startTimer(); preview(RULES.previewSeconds);
+
+  // zera barra e agenda primeiro evento
+  eventsFired=0; lastEvent=''; scheduleNextEvent(true);
 }
+function backToLobby(){
+  stopTimer(); stopEventLoop();
+  // mostrar controles de lobby novamente
+  $('#btnPlay').style.display='inline-block';
+  $('#btnToggleSound').style.display='inline-block';
+  $('#volumeSlider').closest('.vol').style.display='flex';
+  go('lobby');
+  // reset barras
+  $('#lobbyEventFill').style.width='0%';
+}
+
+/* ========= flips ========= */
 function flip(i){
   if(G.lock || G.deck[i].matched || G.first===i) return;
   const tiles=$('#board').children;
+  tiles[i].classList.add('flip'); AudioFX.flipOpen();
+
   if(G.first==null){
-    tiles[i].classList.add('flip'); AudioFX.flipOpen(); G.first=i; setHint('Escolha outra carta 👀'); return;
+    G.first=i; setHint('Escolha outra carta 👀'); return;
   }
-  tiles[i].classList.add('flip'); AudioFX.flipOpen(); G.second=i; G.lock=true; G.moves++; $('#moves').textContent=G.moves;
+  G.second=i; G.lock=true; G.moves++; $('#moves').textContent=G.moves;
   const a=G.deck[G.first], b=G.deck[G.second];
   if(a.key===b.key){
     a.matched=b.matched=true; G.pairs++; $('#pairs').textContent=G.pairs; AudioFX.match();
     setTimeout(()=>{
       setHint('Você acertou, parabéns! 🎉');
       G.first=null; G.second=null; G.lock=false;
-      if(G.pairs===18) win(); else setTimeout(()=>setHint('Escolha uma carta 👀'), 500);
-    },320);
+      if(G.pairs===18) return win();
+      setTimeout(()=>setHint('Escolha uma carta 👀'), 450);
+    }, 300);
   }else{
+    const closeDelay = G.fastFlip ? 420 : 700;
     setTimeout(()=>{
-      tiles[G.first].classList.remove('flip'); tiles[G.second].classList.remove('flip'); AudioFX.flipClose();
-      setHint('Você errou, tente novamente! 🙄');
+      tiles[G.first].classList.remove('flip');
+      tiles[G.second].classList.remove('flip');
+      AudioFX.flipClose(); setHint('Você errou, tente novamente! 🙄');
       G.first=null; G.second=null; G.lock=false;
-      setTimeout(()=>setHint('Escolha uma carta 👀'),700);
-    },700);
+      setTimeout(()=>setHint('Escolha uma carta 👀'), 700);
+    }, closeDelay);
   }
 }
+
+/* ========= win ========= */
 function win(){
-  stopTimer(); stopEventsClock(); clearTimeout(previewTo); AudioFX.victory();
-  $('#wTime').textContent=fmt(G.sec); $('#wMoves').textContent=G.moves; $('#wPairs').textContent=G.pairs;
+  stopTimer(); stopEventLoop(); AudioFX.victory();
+  $('#wTime').textContent=fmtTime(G.sec); $('#wMoves').textContent=G.moves; $('#wPairs').textContent=G.pairs;
   const ov=$('#overlayWin'); ov.classList.add('show'); ov.setAttribute('aria-hidden','false');
 }
 
-/* ==== bind/UI ==== */
-function bindButtonSfx(){
-  document.querySelectorAll('button').forEach(b=>{
-    if(b.__b) return; b.addEventListener('click',()=>AudioFX.click(),{capture:true}); b.__b=true;
-  });
+/* ========= event system ========= */
+function stopEventLoop(){ if(eventTimer){ clearInterval(eventTimer); eventTimer=null } }
+
+function scheduleNextEvent(isFirst=false){
+  // aleatório com jitter
+  const base = rand(RULES.eventMin, RULES.eventMax);
+  const t = clamp(base + rand(-RULES.jitter, RULES.jitter), RULES.eventMin-10, RULES.eventMax+10);
+  eventTargetSec = t; eventElapsed = 0;
+  updateEventFill(0, isFirst? '#lobbyEventFill' : '#gameEventFill');
+
+  if(eventTimer) clearInterval(eventTimer);
+  eventTimer = setInterval(()=>{
+    eventElapsed += .2;
+    const p = Math.min(100, (eventElapsed / eventTargetSec) * 100);
+    updateEventFill(p, '#gameEventFill');
+    if(p>=100){
+      clearInterval(eventTimer); eventTimer=null;
+      triggerEvent();
+    }
+  }, 200);
 }
-$('#btnPlay').onclick = ()=> newGame();
-$('#btnRestart').onclick = ()=>{ stopEventsClock(); clearTimeout(previewTo); newGame(); };
-$('#btnBackInGame').onclick = ()=>{ stopEventsClock(); stopTimer(); go('lobby'); };
-$('#btnBackFromWin').onclick = ()=>{ $('#overlayWin').classList.remove('show'); go('lobby'); };
-$('#btnPlayAgain').onclick = ()=>{ $('#overlayWin').classList.remove('show'); newGame(); };
+function updateEventFill(p, sel){
+  const el = $(sel); if(el) el.style.width = `${p}%`;
+}
+function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
+function clamp(x,a,b){ return Math.max(a, Math.min(b,x)) }
 
-$('#btnToggleSound').onclick = ()=> AudioFX.toggle();
-$('#btnToggleSoundGame').onclick = ()=> AudioFX.toggle();
-$('#volumeSlider').oninput = e => AudioFX.setVolume(e.target.value/100);
-$('#volumeSliderGame').oninput = e => AudioFX.setVolume(e.target.value/100);
+function pickEvent(){
+  const pool = RULES.events.filter(e=>e.key!==lastEvent);
+  const sum = pool.reduce((s,e)=>s+e.weight,0);
+  let r=Math.random()*sum;
+  for(const e of pool){ if((r-=e.weight)<=0) return e; }
+  return pool[0];
+}
 
-/* ==== init (tenta autoplay; se bloquear, ativa no 1º clique) ==== */
-window.addEventListener('load', ()=>{
-  AudioFX.init(); AudioFX.startMusic(); bindButtonSfx(); syncSoundUI();
-  if(AudioFX.ctx.state==='suspended'){
-    const resume=()=>{AudioFX.ctx.resume(); AudioFX.startMusic(); document.removeEventListener('click',resume); };
-    document.addEventListener('click', resume, {once:true});
+function showEventOverlay(title, desc, onGo){
+  $('#eventTitle').textContent = title;
+  $('#eventDesc').textContent  = desc;
+  const ov = $('#eventOverlay'); ov.classList.add('show'); ov.setAttribute('aria-hidden','false');
+  AudioFX.suspense();
+  const go = ()=>{
+    ov.classList.remove('show'); ov.setAttribute('aria-hidden','true');
+    $('#eventGo').removeEventListener('click',go);
+    onGo && onGo();
+  };
+  $('#eventGo').addEventListener('click', go);
+}
+
+function triggerEvent(){
+  if(eventsFired>=RULES.maxPerGame){ scheduleNextEvent(); return; }
+  const ev = pickEvent(); lastEvent = ev.key; eventsFired++;
+
+  const card = $('#gameCard'); // para efeitos CSS no container
+  switch(ev.key){
+    case 'blackout':
+      showEventOverlay('⚠️ Blackout!', 'Tudo escurece por alguns segundos…', ()=>{
+        card.classList.add('blackout');
+        setTimeout(()=>card.classList.remove('blackout'), ev.duration*1000);
+        scheduleNextEvent();
+      });
+      break;
+    case 'invert_board':
+      showEventOverlay('⚠️ Mundo de cabeça pra baixo', 'O tabuleiro fica invertido por 10s!', ()=>{
+        card.classList.add('inverted');
+        setHint('Calma! O tabuleiro está invertido 🔄');
+        setTimeout(()=>{ card.classList.remove('inverted'); setHint('Escolha uma carta 👀'); }, ev.duration*1000);
+        scheduleNextEvent();
+      });
+      break;
+    case 'shuffle_unmatched':
+      showEventOverlay('⚠️ Embaralhar!', 'Cartas não resolvidas trocam de lugar!', ()=>{
+        shuffleUnmatched(8);
+        scheduleNextEvent();
+      });
+      break;
+    case 'recolor_board':
+      showEventOverlay('⚠️ Mudança de cores', 'As cartas mudam de cor rapidamente!', ()=>{
+        card.classList.add('recolor');
+        recolorBacks();
+        setTimeout(()=>card.classList.remove('recolor'), ev.duration*1000);
+        scheduleNextEvent();
+      });
+      break;
+    case 'reveal_partial':
+      showEventOverlay('⚠️ Visão Rápida', 'Algumas cartas serão reveladas por 5s!', ()=>{
+        partialReveal(RULES.bonusCoverage, ev.duration);
+        scheduleNextEvent();
+      });
+      break;
   }
+}
+
+/* === event helpers === */
+function shuffleUnmatched(swaps){
+  const b=$('#board');
+  const idxs=[...G.deck.keys()].filter(i=>!G.deck[i].matched);
+  for(let s=0;s<swaps;s++){
+    const a=idxs[rand(0,idxs.length-1)], c=idxs[rand(0,idxs.length-1)];
+    if(a===c) continue;
+    // swap DOM
+    const A=b.children[a], C=b.children[c]; if(!A||!C) continue;
+    b.insertBefore(C, A);
+    b.insertBefore(A, b.children[c]);
+    // swap deck
+    [G.deck[a], G.deck[c]] = [G.deck[c], G.deck[a]];
+  }
+}
+function recolorBacks(){
+  const backs = $('#board').querySelectorAll('.face.back');
+  backs.forEach((el,i)=>{ el.style.background = `hsl(${(i*37)%360} 60% 52%)`; });
+}
+function partialReveal(rate=0.3, seconds=5){
+  const openIdx = [];
+  const tiles = $('#board').children;
+  const unmatched = [...G.deck.keys()].filter(i=>!G.deck[i].matched);
+  shuffle(unmatched);
+  const showN = Math.max(1, Math.floor(unmatched.length*rate));
+  for(let i=0;i<showN;i++){ const k=unmatched[i]; tiles[k].classList.add('flip'); openIdx.push(k); }
+  setTimeout(()=>{ openIdx.forEach(i=>tiles[i].classList.remove('flip')); }, seconds*1000);
+}
+
+/* ========= routing ========= */
+function go(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); $('#screen-'+id)?.classList.add('active'); }
+
+/* ========= bindings ========= */
+$('#btnPlay').onclick = ()=>{ AudioFX.click(); newGame(); };
+$('#btnBackInGame').onclick = ()=>{ AudioFX.click(); backToLobby(); };
+$('#btnPlayAgain').onclick = ()=>{ AudioFX.click(); $('#overlayWin').classList.remove('show'); newGame(); };
+$('#btnBackFromWin').onclick = ()=>{ AudioFX.click(); $('#overlayWin').classList.remove('show'); backToLobby(); };
+
+$('#btnToggleSound').onclick = ()=>{ AudioFX.click(); AudioFX.toggleSound(); };
+$('#btnToggleSoundGame').onclick = ()=>{ AudioFX.click(); AudioFX.toggleSound(); };
+
+$('#volumeSlider').oninput = e=>{ AudioFX.setVolume(e.target.value/100); syncSoundButtons(); };
+$('#volumeSliderGame').oninput = e=>{ AudioFX.setVolume(e.target.value/100); syncSoundButtons(); };
+
+/* ========= init ========= */
+window.addEventListener('load', ()=>{
+  AudioFX.init();
+  // autoplay fallback
+  if(AudioFX.ctx.state==='suspended'){
+    const resume=()=>{ AudioFX.ctx.resume(); document.removeEventListener('click',resume); };
+    document.addEventListener('click',resume,{once:true});
+  }
+  syncSoundButtons();
+
+  // barra do lobby: já enche pro 1º evento (apenas visual)
+  // (no lobby é só “preview” da barra; o evento real começa no jogo)
+  let p=0; const iv=setInterval(()=>{ p=(p+1)%101; $('#lobbyEventFill').style.width=p+'%'; },120);
 });
 </script>
 </body>
