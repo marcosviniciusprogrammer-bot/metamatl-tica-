@@ -40,6 +40,7 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
 .btn:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(90,130,255,.35)}
 .btn:active{transform:translateY(0) scale(.97)}
 .btn.primary{background:linear-gradient(180deg,#9ec2ff,#5b86ff);color:#0a0f1e;border:none}
+.btn.small{padding:10px 12px;border-radius:12px;font-weight:900}
 .row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
 select{
   width:100%;background:#0d163d;color:#e9eeff;border:1px solid #2a355a;
@@ -77,8 +78,6 @@ select{
 .face.front{background:radial-gradient(120% 120% at 20% 0%, #1d2a63, #101944 70%);border:1px solid #2f3e89}
 .face.back{transform:rotateY(180deg);border:1px solid rgba(255,255,255,.25);
   background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));font-size:clamp(28px,7vw,48px)}
-/* color token */
-.dot{width:60%;height:60%;border-radius:16px;box-shadow:inset 0 0 0 4px rgba(255,255,255,.22)}
 
 /* event bar */
 .eventBar{height:10px;border-radius:999px;background:#17204a;border:1px solid #2a3a7a;overflow:hidden}
@@ -105,7 +104,7 @@ select{
   <header class="wrap">
     <div>
       <h1>Metamatlética — jogo competitivo infantil
-        <small>Frutas + emojis misturados (36 cartas). Faça o menor tempo! ⏱️</small>
+        <small>Frutas + emojis misturados (**42 cartas**). Faça o menor tempo! ⏱️</small>
       </h1>
     </div>
     <div class="tag">v3.12</div>
@@ -116,7 +115,7 @@ select{
     <div class="wrap glass">
       <div class="hero">
         <div class="brand">
-          <h2>🎮 Modo Competitivo 6×6</h2>
+          <h2>🎮 Modo Competitivo 6×?</h2>
           <p>Comece quando estiver pronto. Os eventos surpresas deixam tudo imprevisível 😉</p>
         </div>
         <div class="controls">
@@ -145,6 +144,8 @@ select{
           <div class="stat">⏱️ <b id="time">00:00</b></div>
           <div class="stat">🃏 <b id="moves">0</b> jogadas</div>
           <div class="stat">✅ <b id="pairs">0</b> pares</div>
+          <div class="stat">🏆 <b id="score">0</b> pontos</div>
+          <button class="btn small" id="btnReveal">🔍 Revelar (5s)</button>
         </div>
         <div class="row" id="gameSoundRow">
           <button class="btn" id="btnToggleSoundGame">🔈 Som: ON</button>
@@ -170,7 +171,7 @@ select{
   <div class="overlay" id="overlayWin" aria-hidden="true">
     <div class="eventCard">
       <h3 class="eventTitle">👑 Você venceu!</h3>
-      <p class="eventDesc"><span id="wTime">00:00</span> • <span id="wMoves">0</span> jogadas • <span id="wPairs">0</span> pares</p>
+      <p class="eventDesc"><span id="wTime">00:00</span> • <span id="wMoves">0</span> jogadas • <span id="wPairs">0</span> pares • 🏆 <span id="wScore">0</span> pts</p>
       <div style="margin-top:10px" class="row">
         <button class="btn primary" id="btnPlayAgain">Jogar de novo</button>
         <button class="btn" id="btnBackFromWin">← Lobby</button>
@@ -184,6 +185,8 @@ select{
 const $ = s => document.querySelector(s);
 const fmtTime = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]} return a }
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const rand=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
 
 /* ========= audio (procedural, sem arquivos) ========= */
 const AudioFX = {
@@ -224,7 +227,7 @@ const AudioFX = {
   victory(){ [523,659,784,988,1046,1318,1567].forEach((f,i)=>setTimeout(()=>this.tone(f,.15,'triangle',.15),170*i)); },
   _startMusic(){ // pad simples contínuo
     const chords=[[196,247,294],[220,277,330],[174,220,294],[196,247,330]]; let k=0;
-    const loop=()=>{
+    const loop=()=>{ if(!this.inited) return;
       const now=this.ctx.currentTime, ch=chords[k%chords.length];
       ch.forEach((f,i)=>{const o=this.ctx.createOscillator(), g=this.ctx.createGain();
         o.type='sine'; o.frequency.value=f; g.gain.value=.0001; o.connect(g); g.connect(this.musicBus);
@@ -242,34 +245,43 @@ function syncSoundButtons(){
   if($('#volumeSliderGame')) $('#volumeSliderGame').value=v;
 }
 
-/* ========= regras ========= */
+/* ========= regras (eventos mais cedo e mais longos) ========= */
 const RULES = {
   previewSeconds: 4,
   bonusRevealSeconds: 5,
   bonusCoverage: .30,
   events: [
-    {key:'reveal_partial', weight:35, duration:5},
-    {key:'shuffle_unmatched', weight:30, duration:2},
-    {key:'blackout', weight:15, duration:2.5},
-    {key:'invert_board', weight:10, duration:10},
-    {key:'recolor_board', weight:10, duration:3}
+    {key:'reveal_partial',    weight:35, duration:6},    // +1s
+    {key:'shuffle_unmatched', weight:30, duration:3},    // +1s
+    {key:'blackout',          weight:15, duration:3.5},  // +1s
+    {key:'invert_board',      weight:10, duration:12},   // +2s
+    {key:'recolor_board',     weight:10, duration:4}     // +1s
   ],
-  eventMin:100, eventMax:120, jitter:15, cooldown:60, maxPerGame:3
+  eventMin: 45,  // antes 100
+  eventMax: 70,  // antes 120
+  jitter:   8,
+  cooldown: 50,
+  maxPerGame: 4
 };
 
-/* ========= deck (36 cartas: frutas + emojis) ========= */
-const POOL = ['🍎','🍌','🍇','🍓','🍍','🍑','🍉','🥝','🍐','🍒','🍊','🍈','🍋','🍏','🥥','🥭','🍅','🍆','🥕','⭐','🌙','⚡','🔥','❄️','🌈','💎','🎈','🎲','🎯'];
+/* ========= deck (42 cartas: frutas + emojis aleatórios) ========= */
+const POOL = ['🍎','🍌','🍇','🍓','🍍','🍑','🍉','🥝','🍐','🍒','🍊','🍈','🍋','🍏','🥥','🥭','⭐','🌙','⚡','🔥','❄️','🌈','💎','🎈','🎲','🎯','🎵','🛸','🧩','🚀','🧠','🪐','🧸','🎁','🍀','🎮'];
+function sampleUnique(arr,n){ const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]} return a.slice(0,n); }
 function makeDeck(){
-  const pairs = 18; // 36 cartas
-  const items = POOL.slice(0,pairs).map(v=>({t:'emoji',v}));
+  const pairs = 21; // 42 cartas (6 colunas × 7 linhas)
+  const items = sampleUnique(POOL, pairs).map(v=>({t:'emoji',v}));
   return shuffle([...items, ...items]).map((x,i)=>({id:i,key:x.v,t:x.t,matched:false}));
 }
 
 /* ========= state ========= */
 let G = null, timer=null;
 let eventTimer=null, eventTargetSec=0, eventElapsed=0, lastEvent='', eventsFired=0;
-
+function totalPairs(){ return (G?.deck?.length||0)/2 }
 function setHint(msg){ $('#hint').textContent = msg; }
+function updateScore(){
+  const pts = Math.max(0, Math.floor(G.pairs*120 - G.moves*3 - G.sec));
+  G.score = pts; $('#score').textContent = pts;
+}
 
 /* ========= UI build ========= */
 function buildBoard(){
@@ -279,7 +291,7 @@ function buildBoard(){
     const inner=document.createElement('div'); inner.className='tile-inner';
     const front=document.createElement('div'); front.className='face front';
     const back=document.createElement('div'); back.className='face back';
-    if(c.t==='emoji'){ back.textContent=c.key; }
+    back.textContent=c.key;
     inner.appendChild(front); inner.appendChild(back); el.appendChild(inner);
     el.addEventListener('click',()=>flip(i));
     b.appendChild(el);
@@ -287,7 +299,7 @@ function buildBoard(){
 }
 function startTimer(){
   if(timer) clearInterval(timer);
-  timer=setInterval(()=>{ G.sec++; $('#time').textContent=fmtTime(G.sec); },1000);
+  timer=setInterval(()=>{ G.sec++; $('#time').textContent=fmtTime(G.sec); updateScore(); },1000);
 }
 function stopTimer(){ if(timer){clearInterval(timer); timer=null} }
 
@@ -311,9 +323,10 @@ function newGame(){
 
   // ir pro game
   go('game');
-  G = { deck:makeDeck(), first:null, second:null, lock:false, moves:0, pairs:0, sec:0, fastFlip:false };
-  $('#moves').textContent='0'; $('#pairs').textContent='0'; $('#time').textContent='00:00';
+  G = { deck:makeDeck(), first:null, second:null, lock:false, moves:0, pairs:0, sec:0, fastFlip:false, score:0, revealUsed:false };
+  $('#moves').textContent='0'; $('#pairs').textContent='0'; $('#time').textContent='00:00'; $('#score').textContent='0';
   buildBoard(); startTimer(); preview(RULES.previewSeconds);
+  $('#btnReveal').disabled=false;
 
   // zera barra e agenda primeiro evento
   eventsFired=0; lastEvent=''; scheduleNextEvent(true);
@@ -338,14 +351,14 @@ function flip(i){
   if(G.first==null){
     G.first=i; setHint('Escolha outra carta 👀'); return;
   }
-  G.second=i; G.lock=true; G.moves++; $('#moves').textContent=G.moves;
+  G.second=i; G.lock=true; G.moves++; $('#moves').textContent=G.moves; updateScore();
   const a=G.deck[G.first], b=G.deck[G.second];
   if(a.key===b.key){
-    a.matched=b.matched=true; G.pairs++; $('#pairs').textContent=G.pairs; AudioFX.match();
+    a.matched=b.matched=true; G.pairs++; $('#pairs').textContent=G.pairs; AudioFX.match(); updateScore();
     setTimeout(()=>{
       setHint('Você acertou, parabéns! 🎉');
       G.first=null; G.second=null; G.lock=false;
-      if(G.pairs===18) return win();
+      if(G.pairs===totalPairs()) return win();
       setTimeout(()=>setHint('Escolha uma carta 👀'), 450);
     }, 300);
   }else{
@@ -363,7 +376,7 @@ function flip(i){
 /* ========= win ========= */
 function win(){
   stopTimer(); stopEventLoop(); AudioFX.victory();
-  $('#wTime').textContent=fmtTime(G.sec); $('#wMoves').textContent=G.moves; $('#wPairs').textContent=G.pairs;
+  $('#wTime').textContent=fmtTime(G.sec); $('#wMoves').textContent=G.moves; $('#wPairs').textContent=G.pairs; $('#wScore').textContent=G.score;
   const ov=$('#overlayWin'); ov.classList.add('show'); ov.setAttribute('aria-hidden','false');
 }
 
@@ -371,7 +384,6 @@ function win(){
 function stopEventLoop(){ if(eventTimer){ clearInterval(eventTimer); eventTimer=null } }
 
 function scheduleNextEvent(isFirst=false){
-  // aleatório com jitter
   const base = rand(RULES.eventMin, RULES.eventMax);
   const t = clamp(base + rand(-RULES.jitter, RULES.jitter), RULES.eventMin-10, RULES.eventMax+10);
   eventTargetSec = t; eventElapsed = 0;
@@ -388,11 +400,7 @@ function scheduleNextEvent(isFirst=false){
     }
   }, 200);
 }
-function updateEventFill(p, sel){
-  const el = $(sel); if(el) el.style.width = `${p}%`;
-}
-function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
-function clamp(x,a,b){ return Math.max(a, Math.min(b,x)) }
+function updateEventFill(p, sel){ const el=$(sel); if(el) el.style.width=p+'%'; }
 
 function pickEvent(){
   const pool = RULES.events.filter(e=>e.key!==lastEvent);
@@ -407,11 +415,7 @@ function showEventOverlay(title, desc, onGo){
   $('#eventDesc').textContent  = desc;
   const ov = $('#eventOverlay'); ov.classList.add('show'); ov.setAttribute('aria-hidden','false');
   AudioFX.suspense();
-  const go = ()=>{
-    ov.classList.remove('show'); ov.setAttribute('aria-hidden','true');
-    $('#eventGo').removeEventListener('click',go);
-    onGo && onGo();
-  };
+  const go = ()=>{ ov.classList.remove('show'); ov.setAttribute('aria-hidden','true'); $('#eventGo').removeEventListener('click',go); onGo && onGo(); };
   $('#eventGo').addEventListener('click', go);
 }
 
@@ -419,7 +423,7 @@ function triggerEvent(){
   if(eventsFired>=RULES.maxPerGame){ scheduleNextEvent(); return; }
   const ev = pickEvent(); lastEvent = ev.key; eventsFired++;
 
-  const card = $('#gameCard'); // para efeitos CSS no container
+  const card = $('#gameCard');
   switch(ev.key){
     case 'blackout':
       showEventOverlay('⚠️ Blackout!', 'Tudo escurece por alguns segundos…', ()=>{
@@ -429,7 +433,7 @@ function triggerEvent(){
       });
       break;
     case 'invert_board':
-      showEventOverlay('⚠️ Mundo de cabeça pra baixo', 'O tabuleiro fica invertido por 10s!', ()=>{
+      showEventOverlay('⚠️ Mundo de cabeça pra baixo', `O tabuleiro fica invertido por ${ev.duration|0}s!`, ()=>{
         card.classList.add('inverted');
         setHint('Calma! O tabuleiro está invertido 🔄');
         setTimeout(()=>{ card.classList.remove('inverted'); setHint('Escolha uma carta 👀'); }, ev.duration*1000);
@@ -438,20 +442,19 @@ function triggerEvent(){
       break;
     case 'shuffle_unmatched':
       showEventOverlay('⚠️ Embaralhar!', 'Cartas não resolvidas trocam de lugar!', ()=>{
-        shuffleUnmatched(8);
+        shuffleUnmatched(10);
         scheduleNextEvent();
       });
       break;
     case 'recolor_board':
       showEventOverlay('⚠️ Mudança de cores', 'As cartas mudam de cor rapidamente!', ()=>{
-        card.classList.add('recolor');
-        recolorBacks();
+        card.classList.add('recolor'); recolorBacks();
         setTimeout(()=>card.classList.remove('recolor'), ev.duration*1000);
         scheduleNextEvent();
       });
       break;
     case 'reveal_partial':
-      showEventOverlay('⚠️ Visão Rápida', 'Algumas cartas serão reveladas por 5s!', ()=>{
+      showEventOverlay('⚠️ Visão Rápida', `Algumas cartas serão reveladas por ${ev.duration|0}s!`, ()=>{
         partialReveal(RULES.bonusCoverage, ev.duration);
         scheduleNextEvent();
       });
@@ -466,11 +469,9 @@ function shuffleUnmatched(swaps){
   for(let s=0;s<swaps;s++){
     const a=idxs[rand(0,idxs.length-1)], c=idxs[rand(0,idxs.length-1)];
     if(a===c) continue;
-    // swap DOM
     const A=b.children[a], C=b.children[c]; if(!A||!C) continue;
     b.insertBefore(C, A);
     b.insertBefore(A, b.children[c]);
-    // swap deck
     [G.deck[a], G.deck[c]] = [G.deck[c], G.deck[a]];
   }
 }
@@ -488,6 +489,16 @@ function partialReveal(rate=0.3, seconds=5){
   setTimeout(()=>{ openIdx.forEach(i=>tiles[i].classList.remove('flip')); }, seconds*1000);
 }
 
+/* ========= botão Revelar (5s, uma vez) ========= */
+function revealAllOnce(){
+  if(G.revealUsed) return;
+  G.revealUsed = true;
+  $('#btnReveal').disabled = true;
+  const tiles = $('#board').children;
+  [...tiles].forEach(t=>t.classList.add('flip'));
+  setTimeout(()=>{ [...tiles].forEach(t=>t.classList.remove('flip')); }, RULES.bonusRevealSeconds*1000);
+}
+
 /* ========= routing ========= */
 function go(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); $('#screen-'+id)?.classList.add('active'); }
 
@@ -503,22 +514,20 @@ $('#btnToggleSoundGame').onclick = ()=>{ AudioFX.click(); AudioFX.toggleSound();
 $('#volumeSlider').oninput = e=>{ AudioFX.setVolume(e.target.value/100); syncSoundButtons(); };
 $('#volumeSliderGame').oninput = e=>{ AudioFX.setVolume(e.target.value/100); syncSoundButtons(); };
 
+$('#btnReveal').onclick = ()=>{ AudioFX.click(); revealAllOnce(); };
+
 /* ========= init ========= */
 window.addEventListener('load', ()=>{
   AudioFX.init();
-  // autoplay fallback
   if(AudioFX.ctx.state==='suspended'){
     const resume=()=>{ AudioFX.ctx.resume(); document.removeEventListener('click',resume); };
     document.addEventListener('click',resume,{once:true});
   }
   syncSoundButtons();
 
-  // barra do lobby: já enche pro 1º evento (apenas visual)
-  // (no lobby é só “preview” da barra; o evento real começa no jogo)
+  // barra do lobby: preenchimento contínuo apenas visual
   let p=0; const iv=setInterval(()=>{ p=(p+1)%101; $('#lobbyEventFill').style.width=p+'%'; },120);
 });
 </script>
 </body>
 </html>
-
-    
