@@ -97,6 +97,9 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
 #gameCard.bw-mode{filter:grayscale(1) contrast(1.05) brightness(.92)}
 .recolor .face.back {transition:background-color .25s}
 
+.matched .face.front{visibility:hidden}   /* pares encontrados ficam sempre “virados” */
+.matched .tile-inner{transform:rotateY(180deg)} 
+
 @media (max-width:760px){ .slider{width:100%} }
 </style>
 </head>
@@ -238,17 +241,17 @@ function syncSoundButtons(){
 
 /* ========= regras ========= */
 const RULES = {
-  previewSeconds: 4,
+  previewSeconds: 12,          /* prévia inicial = 12s (fixo) */
   bonusRevealSeconds: 5,
   bonusCoverage: .30,
   events: [
-    {key:'reveal_partial',    weight:35, duration:6},
-    {key:'shuffle_unmatched', weight:30, duration:3},
-    {key:'blackout',          weight:15, duration:3.8}, /* um pouco mais forte/longa */
-    {key:'invert_board',      weight:10, duration:12},
-    {key:'recolor_board',     weight:10, duration:5}    /* p&b por mais tempo */
+    {key:'reveal_partial',    weight:35, duration:7},
+    {key:'shuffle_unmatched', weight:30, duration:0},   /* instantâneo, só realoca */
+    {key:'blackout',          weight:15, duration:4.5},
+    {key:'invert_board',      weight:10, duration:14},
+    {key:'recolor_board',     weight:10, duration:6}
   ],
-  eventMin: 45, eventMax: 70, jitter: 8, cooldown: 50, maxPerGame: 4
+  eventMin: 50, eventMax: 80, jitter: 10, cooldown: 55, maxPerGame: 4
 };
 
 /* ========= deck (42 cartas = 21 pares) ========= */
@@ -274,7 +277,7 @@ function updateScore(){
 function buildBoard(){
   const b=$('#board'); b.innerHTML='';
   G.deck.forEach((c,i)=>{
-    const el=document.createElement('button'); el.className='tile'; el.dataset.i=i;
+    const el=document.createElement('button'); el.className='tile'+(c.matched?' matched':''); el.dataset.i=i;
     const inner=document.createElement('div'); inner.className='tile-inner';
     const front=document.createElement('div'); front.className='face front';
     const back=document.createElement('div'); back.className='face back';
@@ -319,8 +322,14 @@ function flip(i){
   const a=G.deck[G.first], b=G.deck[G.second];
   if(a.key===b.key){
     a.matched=b.matched=true; G.pairs++; $('#pairs').textContent=G.pairs; AudioFX.match(); updateScore();
-    setTimeout(()=>{ setHint('Você acertou, parabéns! 🎉'); G.first=null; G.second=null; G.lock=false;
-      if(G.pairs===totalPairs()) return win(); setTimeout(()=>setHint('Escolha uma carta 👀'), 450); }, 300);
+    setTimeout(()=>{ 
+      setHint('Você acertou, parabéns! 🎉'); 
+      G.first=null; G.second=null; G.lock=false;
+      // mantém visualmente viradas
+      buildBoard();
+      if(G.pairs===totalPairs()) return win(); 
+      setTimeout(()=>setHint('Escolha uma carta 👀'), 450); 
+    }, 250);
   }else{
     const closeDelay = G.fastFlip ? 420 : 700;
     setTimeout(()=>{ tiles[G.first].classList.remove('flip'); tiles[G.second].classList.remove('flip'); AudioFX.flipClose();
@@ -380,9 +389,9 @@ function triggerEvent(){
     case 'shuffle_unmatched':
       showEventOverlay('⚠️ Embaralhar!', 'Cartas não resolvidas trocam de lugar!', ()=>{
         G.lock = true;
-        shuffleUnmatchedSafe();      // <<< corrigido
-        buildBoard();                // re-render para manter índices corretos
-        G.first = G.second = null;   // limpa seleção
+        shuffleUnmatchedSafe();   // realoca APENAS não resolvidas
+        buildBoard();             // re-render mantendo pares marcados
+        G.first = G.second = null;
         G.lock = false;
         scheduleNextEvent();
       }); break;
@@ -406,25 +415,22 @@ function triggerEvent(){
 }
 
 /* ======= helpers de evento ======= */
-/* embaralhamento seguro: mexe só no deck e reconstrói a UI */
+/* embaralhamento seguro: mexe só no deck (não toca nos pareados) */
 function shuffleUnmatchedSafe(){
   const idxs = [...G.deck.keys()].filter(i=>!G.deck[i].matched);
   const cards = idxs.map(i=>G.deck[i]);
   shuffle(cards);
   idxs.forEach((pos,k)=>{ G.deck[pos] = cards[k]; });
 }
-function recolorBacks(){ /* (mantido caso queira usar efeitos por cor no futuro) */
-  const backs = $('#board').querySelectorAll('.face.back');
-  backs.forEach((el,i)=>{ el.style.background = `hsl(${(i*37)%360} 60% 52%)`; });
-}
 function partialReveal(rate=0.3, seconds=5){
   const openIdx = [], tiles = $('#board').children, unmatched = [...G.deck.keys()].filter(i=>!G.deck[i].matched); shuffle(unmatched);
-  const showN = Math.max(1, Math.floor(unmatched.length*rate)); for(let i=0;i<showN;i++){ const k=unmatched[i]; tiles[k].classList.add('flip'); openIdx.push(k); }
+  const showN = Math.max(1, Math.floor(unmatched.length*rate));
+  for(let i=0;i<showN;i++){ const k=unmatched[i]; tiles[k].classList.add('flip'); openIdx.push(k); }
   setTimeout(()=>{ openIdx.forEach(i=>tiles[i].classList.remove('flip')); }, seconds*1000);
 }
 
-/* === escolher 2 pares não resolvidos (máx. 4 cartas) === */
-function pickTwoUnmatchedPairs() {
+/* === escolher N pares não resolvidos === */
+function pickUnmatchedPairs(countPairs=3) {
   const buckets = new Map(); // key -> [idx, idx]
   G.deck.forEach((card, idx) => {
     if (!card.matched) {
@@ -433,22 +439,24 @@ function pickTwoUnmatchedPairs() {
     }
   });
   const completePairs = [...buckets.values()].filter(list => list.length === 2);
+  // embaralha a lista de pares completos
   for (let i = completePairs.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [completePairs[i], completePairs[j]] = [completePairs[j], completePairs[i]];
   }
-  return completePairs.slice(0, 2).flat();
+  return completePairs.slice(0, countPairs).flat(); // retorna índices (2*countPairs)
 }
 
-/* ========= botão Revelar (5s, uma vez) — permanece corrigido ========= */
+/* ========= botão Revelar (5s, uma vez) — 3 pares ========= */
 function revealAllOnce() {
   if (G.revealUsed) return;
 
   const btn = $('#btnReveal');
   const tiles = $('#board').children;
 
-  const showIdx = pickTwoUnmatchedPairs();
+  const showIdx = pickUnmatchedPairs(3); // 3 pares = 6 cartas
 
+  // se não houver 3 pares, mostra o que der (sem resetar)
   if (showIdx.length === 0) {
     G.revealUsed = true;
     btn.disabled = true;
@@ -510,4 +518,3 @@ window.addEventListener('load', ()=>{
 </script>
 </body>
 </html>
-
