@@ -67,6 +67,7 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
 .board{display:grid;gap:12px;padding:16px;border-radius:22px;border:1px solid rgba(255,255,255,.12);
   background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));box-shadow:var(--shadow)}
 .cols-6{grid-template-columns:repeat(6,1fr)}
+.cols-4{grid-template-columns:repeat(4,1fr)}
 .tile{position:relative;aspect-ratio:3/4;border:none;border-radius:18px;overflow:hidden;cursor:pointer;perspective:1000px;outline:none;box-shadow:0 10px 22px rgba(0,0,0,.4)}
 .tile-inner{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
 .tile.flip .tile-inner{transform:rotateY(180deg)}
@@ -89,16 +90,13 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
 
 /* Effects for events */
 #gameCard.blackout{filter:brightness(0.04) saturate(0);transition:filter .2s}
-#gameCard.blackout::after{
-  content:""; position:absolute; inset:0; border-radius:22px;
-  background:rgba(0,0,0,.35); pointer-events:none;
-}
+#gameCard.blackout::after{content:""; position:absolute; inset:0; border-radius:22px; background:rgba(0,0,0,.35); pointer-events:none}
 #gameCard.inverted{transform:rotate(180deg);transition:transform .4s}
 #gameCard.bw-mode{filter:grayscale(1) contrast(1.05) brightness(.92)}
 .recolor .face.back {transition:background-color .25s}
 
-.matched .face.front{visibility:hidden}   /* pares encontrados ficam sempre “virados” */
-.matched .tile-inner{transform:rotateY(180deg)} 
+.matched .face.front{visibility:hidden}
+.matched .tile-inner{transform:rotateY(180deg)}
 
 @media (max-width:760px){ .slider{width:100%} }
 </style>
@@ -108,10 +106,10 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
   <header class="wrap">
     <div>
       <h1>Metamatlética — jogo competitivo infantil
-        <small>Frutas + emojis misturados (<b>42 cartas</b>). Faça o menor tempo! ⏱️</small>
+        <small>Frutas + emojis misturados. Faça o menor tempo! ⏱️</small>
       </h1>
     </div>
-    <div class="tag">v3.12</div>
+    <div class="tag">v4.0</div>
   </header>
 
   <!-- LOBBY -->
@@ -119,12 +117,13 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
     <div class="wrap glass">
       <div class="hero">
         <div class="brand">
-          <h2>🎮 Modo Competitivo 6×7</h2>
-          <p>Comece quando estiver pronto. Os eventos surpresas deixam tudo imprevisível 😉</p>
+          <h2>🎮 Escolha o modo</h2>
+          <p>👶 <b>Modo Criança</b> (4×4, 8 pares) — mais simples.<br>🚀 <b>Modo Normal</b> (6×7, 21 pares) — com eventos.</p>
         </div>
         <div class="controls">
           <div class="row">
-            <button id="btnPlay" class="btn primary">🚀 Jogar</button>
+            <button id="btnPlayEasy" class="btn primary">👶 Modo Criança</button>
+            <button id="btnPlay" class="btn">🚀 Jogar (Normal)</button>
             <button id="btnToggleSound" class="btn">🔈 Som: ON</button>
             <div class="vol"><span>🔊</span><input id="volumeSlider" class="slider" type="range" min="0" max="100" value="70"></div>
           </div>
@@ -132,7 +131,7 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
             <div class="eventBar" title="Próximo evento">
               <div id="lobbyEventFill" class="eventFill"></div>
             </div>
-            <div class="muted" style="margin-top:6px;font-size:14px">Barra de evento (mostra quando o 1º evento vai chegar)</div>
+            <div class="muted" style="margin-top:6px;font-size:14px">Barra de evento (apenas visual no lobby)</div>
           </div>
         </div>
       </div>
@@ -158,7 +157,7 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
       </div>
       <div class="eventBar"><div id="gameEventFill" class="eventFill"></div></div>
       <div class="hint" id="hint">Boa sorte! 👀</div>
-      <div id="board" class="board cols-6"></div>
+      <div id="board" class="board"></div>
     </div>
   </section>
 
@@ -241,24 +240,27 @@ function syncSoundButtons(){
 
 /* ========= regras ========= */
 const RULES = {
-  previewSeconds: 12,          /* prévia inicial = 12s (fixo) */
+  previewSeconds: 12,
   bonusRevealSeconds: 5,
   bonusCoverage: .30,
   events: [
     {key:'reveal_partial',    weight:35, duration:7},
-    {key:'shuffle_unmatched', weight:30, duration:0},   /* instantâneo, só realoca */
+    {key:'shuffle_unmatched', weight:30, duration:0},
     {key:'blackout',          weight:15, duration:4.5},
     {key:'invert_board',      weight:10, duration:14},
     {key:'recolor_board',     weight:10, duration:6}
   ],
   eventMin: 50, eventMax: 80, jitter: 10, cooldown: 55, maxPerGame: 4
 };
+const RULES_EASY = {
+  previewSeconds: 8, bonusRevealSeconds: 5, bonusCoverage: .40,
+  events: [], maxPerGame: 0
+};
 
-/* ========= deck (42 cartas = 21 pares) ========= */
+/* ========= pool ========= */
 const POOL = ['🍎','🍌','🍇','🍓','🍍','🍑','🍉','🥝','🍐','🍒','🍊','🍈','🍋','🍏','🥥','🥭','⭐','🌙','⚡','🔥','❄️','🌈','💎','🎈','🎲','🎯','🎵','🛸','🧩','🚀','🧠','🪐','🧸','🎁','🍀','🎮','🎧','⚽','🏀','🎹','🎪','🦄','🐱'];
 function sampleUnique(arr,n){ const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]} return a.slice(0,n); }
-function makeDeck(){
-  const pairs = 21; // 42 cartas (6×7)
+function makeDeck(pairs){
   const items = sampleUnique(POOL, pairs).map(v=>({t:'emoji',v}));
   return shuffle([...items, ...items]).map((x,i)=>({id:i,key:x.v,t:x.t,matched:false}));
 }
@@ -276,6 +278,8 @@ function updateScore(){
 /* ========= UI ========= */
 function buildBoard(){
   const b=$('#board'); b.innerHTML='';
+  b.classList.remove('cols-4','cols-6');
+  b.classList.add(G.mode==='easy' ? 'cols-4' : 'cols-6');
   G.deck.forEach((c,i)=>{
     const el=document.createElement('button'); el.className='tile'+(c.matched?' matched':''); el.dataset.i=i;
     const inner=document.createElement('div'); inner.className='tile-inner';
@@ -297,18 +301,30 @@ function preview(seconds){
 }
 
 /* ========= game start/stop ========= */
-function newGame(){
-  $('#btnPlay').style.display='none'; $('#btnToggleSound').style.display='none'; $('#volumeSlider').closest('.vol').style.display='none';
+function newGame(mode='normal'){
+  // esconder controles do lobby
+  $('#btnPlay').style.display='none'; $('#btnPlayEasy').style.display='none';
+  $('#btnToggleSound').style.display='none'; $('#volumeSlider').closest('.vol').style.display='none';
+
   go('game');
-  G = { deck:makeDeck(), first:null, second:null, lock:false, moves:0, pairs:0, sec:0, fastFlip:false, score:0, revealUsed:false };
+
+  G = {
+    mode,
+    deck: makeDeck(mode==='easy' ? 8 : 21), // 8 pares (4x4) ou 21 pares (6x7)
+    first:null, second:null, lock:false, moves:0, pairs:0, sec:0, fastFlip:false, score:0, revealUsed:false
+  };
   $('#moves').textContent='0'; $('#pairs').textContent='0'; $('#time').textContent='00:00'; $('#score').textContent='0';
-  buildBoard(); startTimer(); preview(RULES.previewSeconds);
+  buildBoard(); startTimer(); preview((mode==='easy'? RULES_EASY : RULES).previewSeconds);
   $('#btnReveal').disabled=false; $('#btnReveal').textContent='🔍 Revelar cartas grátis 5s';
-  eventsFired=0; lastEvent=''; scheduleNextEvent(true);
+
+  // eventos: só no modo normal
+  eventsFired=0; lastEvent='';
+  if(mode==='normal'){ scheduleNextEvent(true); } else { $('#gameEventFill').style.width='0%'; stopEventLoop(); }
 }
 function backToLobby(){
   stopTimer(); stopEventLoop();
-  $('#btnPlay').style.display='inline-block'; $('#btnToggleSound').style.display='inline-block'; $('#volumeSlider').closest('.vol').style.display='flex';
+  $('#btnPlay').style.display='inline-block'; $('#btnPlayEasy').style.display='inline-block';
+  $('#btnToggleSound').style.display='inline-block'; $('#volumeSlider').closest('.vol').style.display='flex';
   go('lobby'); $('#lobbyEventFill').style.width='0%';
 }
 
@@ -325,8 +341,7 @@ function flip(i){
     setTimeout(()=>{ 
       setHint('Você acertou, parabéns! 🎉'); 
       G.first=null; G.second=null; G.lock=false;
-      // mantém visualmente viradas
-      buildBoard();
+      buildBoard();  // mantém visualmente viradas
       if(G.pairs===totalPairs()) return win(); 
       setTimeout(()=>setHint('Escolha uma carta 👀'), 450); 
     }, 250);
@@ -365,57 +380,55 @@ function showEventOverlay(title, desc, onGo){
   $('#eventGo').addEventListener('click', go);
 }
 function triggerEvent(){
+  if(G.mode==='easy'){ return; } // sem eventos no modo criança
   if(eventsFired>=RULES.maxPerGame){ scheduleNextEvent(); return; }
   const ev = pickEvent(); lastEvent = ev.key; eventsFired++;
   const card = $('#gameCard');
 
   switch(ev.key){
-    case 'blackout':
+    case 'blackout': // bloqueia durante o blackout
       showEventOverlay('⚠️ Blackout!', 'Tudo escurece por alguns segundos…', ()=>{
         G.lock = true;
         card.classList.add('blackout');
-        setTimeout(()=>{ card.classList.remove('blackout'); G.lock = false; }, ev.duration*1000);
-        scheduleNextEvent();
-      }); break;
+        setTimeout(()=>{ card.classList.remove('blackout'); G.lock = false; scheduleNextEvent(); }, ev.duration*1000);
+      }); 
+      break;
 
-    case 'invert_board':
+    case 'invert_board': // não bloqueia – jogador pode virar
       showEventOverlay('⚠️ Mundo de cabeça pra baixo', `O tabuleiro fica invertido por ${ev.duration|0}s!`, ()=>{
-        G.lock = true;
         card.classList.add('inverted'); setHint('Calma! O tabuleiro está invertido 🔄');
-        setTimeout(()=>{ card.classList.remove('inverted'); setHint('Escolha uma carta 👀'); G.lock=false; }, ev.duration*1000);
-        scheduleNextEvent();
-      }); break;
+        setTimeout(()=>{ card.classList.remove('inverted'); setHint('Escolha uma carta 👀'); scheduleNextEvent(); }, ev.duration*1000);
+      }); 
+      break;
 
-    case 'shuffle_unmatched':
+    case 'shuffle_unmatched': // trava só enquanto embaralha
       showEventOverlay('⚠️ Embaralhar!', 'Cartas não resolvidas trocam de lugar!', ()=>{
         G.lock = true;
-        shuffleUnmatchedSafe();   // realoca APENAS não resolvidas
-        buildBoard();             // re-render mantendo pares marcados
+        shuffleUnmatchedSafe();
+        buildBoard();
         G.first = G.second = null;
         G.lock = false;
         scheduleNextEvent();
-      }); break;
+      }); 
+      break;
 
-    case 'recolor_board':
+    case 'recolor_board': // não bloqueia
       showEventOverlay('⚠️ Preto & branco', 'Tudo fica P&B por alguns segundos!', ()=>{
-        G.lock = true;
         card.classList.add('bw-mode');
-        setTimeout(()=>{ card.classList.remove('bw-mode'); G.lock = false; }, ev.duration*1000);
-        scheduleNextEvent();
-      }); break;
+        setTimeout(()=>{ card.classList.remove('bw-mode'); scheduleNextEvent(); }, ev.duration*1000);
+      }); 
+      break;
 
-    case 'reveal_partial':
+    case 'reveal_partial': // não bloqueia – só mostra algumas cartas
       showEventOverlay('⚠️ Visão Rápida', `Algumas cartas serão reveladas por ${ev.duration|0}s!`, ()=>{
-        G.lock = true;
         partialReveal(RULES.bonusCoverage, ev.duration);
-        setTimeout(()=>{ G.lock = false; }, ev.duration*1000);
-        scheduleNextEvent();
-      }); break;
+        setTimeout(()=>{ scheduleNextEvent(); }, ev.duration*1000);
+      }); 
+      break;
   }
 }
 
 /* ======= helpers de evento ======= */
-/* embaralhamento seguro: mexe só no deck (não toca nos pareados) */
 function shuffleUnmatchedSafe(){
   const idxs = [...G.deck.keys()].filter(i=>!G.deck[i].matched);
   const cards = idxs.map(i=>G.deck[i]);
@@ -439,11 +452,7 @@ function pickUnmatchedPairs(countPairs=3) {
     }
   });
   const completePairs = [...buckets.values()].filter(list => list.length === 2);
-  // embaralha a lista de pares completos
-  for (let i = completePairs.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [completePairs[i], completePairs[j]] = [completePairs[j], completePairs[i]];
-  }
+  for (let i = completePairs.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [completePairs[i], completePairs[j]] = [completePairs[j], completePairs[i]]; }
   return completePairs.slice(0, countPairs).flat(); // retorna índices (2*countPairs)
 }
 
@@ -456,7 +465,6 @@ function revealAllOnce() {
 
   const showIdx = pickUnmatchedPairs(3); // 3 pares = 6 cartas
 
-  // se não houver 3 pares, mostra o que der (sem resetar)
   if (showIdx.length === 0) {
     G.revealUsed = true;
     btn.disabled = true;
@@ -472,7 +480,7 @@ function revealAllOnce() {
     [...tiles].map((t, i) => t.classList.contains('flip') ? i : -1).filter(i => i >= 0)
   );
 
-  G.lock = true;
+  // Não trava o jogo durante a dica – só evita clique duplo na mesma carta
   showIdx.forEach(i => tiles[i].classList.add('flip'));
   setHint('Dica bônus! 👀');
 
@@ -483,17 +491,18 @@ function revealAllOnce() {
       }
     });
     setHint('Escolha uma carta 👀');
-    G.lock = false;
-  }, RULES.bonusRevealSeconds * 1000);
+  }, (G.mode==='easy'? RULES_EASY.bonusRevealSeconds : RULES.bonusRevealSeconds) * 1000);
 }
 
 /* ========= routing ========= */
 function go(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); $('#screen-'+id)?.classList.add('active'); }
 
 /* ========= bindings ========= */
-$('#btnPlay').onclick = ()=>{ AudioFX.click(); newGame(); };
+$('#btnPlay').onclick = ()=>{ AudioFX.click(); newGame('normal'); };
+$('#btnPlayEasy').onclick = ()=>{ AudioFX.click(); newGame('easy'); };
+
 $('#btnBackInGame').onclick = ()=>{ AudioFX.click(); backToLobby(); };
-$('#btnPlayAgain').onclick = ()=>{ AudioFX.click(); $('#overlayWin').classList.remove('show'); newGame(); };
+$('#btnPlayAgain').onclick = ()=>{ AudioFX.click(); $('#overlayWin').classList.remove('show'); newGame(G?.mode || 'normal'); };
 $('#btnBackFromWin').onclick = ()=>{ AudioFX.click(); $('#overlayWin').classList.remove('show'); backToLobby(); };
 
 $('#btnToggleSound').onclick = ()=>{ AudioFX.click(); AudioFX.toggleSound(); };
