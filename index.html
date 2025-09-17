@@ -109,7 +109,7 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
         <small>Frutas + emojis misturados. Faça o menor tempo! ⏱️</small>
       </h1>
     </div>
-    <div class="tag">v4.0</div>
+    <div class="tag">v4.1</div>
   </header>
 
   <!-- LOBBY -->
@@ -118,7 +118,7 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
       <div class="hero">
         <div class="brand">
           <h2>🎮 Escolha o modo</h2>
-          <p>👶 <b>Modo Criança</b> (4×4, 8 pares) — mais simples.<br>🚀 <b>Modo Normal</b> (6×7, 21 pares) — com eventos.</p>
+          <p>👶 <b>Modo Criança</b> (4×5, 10 pares) — um pouco mais fácil.<br>🚀 <b>Modo Normal</b> (6×7, 21 pares) — com eventos.</p>
         </div>
         <div class="controls">
           <div class="row">
@@ -253,7 +253,7 @@ const RULES = {
   eventMin: 50, eventMax: 80, jitter: 10, cooldown: 55, maxPerGame: 4
 };
 const RULES_EASY = {
-  previewSeconds: 8, bonusRevealSeconds: 5, bonusCoverage: .40,
+  previewSeconds: 10, bonusRevealSeconds: 5, bonusCoverage: .40,
   events: [], maxPerGame: 0
 };
 
@@ -302,22 +302,19 @@ function preview(seconds){
 
 /* ========= game start/stop ========= */
 function newGame(mode='normal'){
-  // esconder controles do lobby
   $('#btnPlay').style.display='none'; $('#btnPlayEasy').style.display='none';
   $('#btnToggleSound').style.display='none'; $('#volumeSlider').closest('.vol').style.display='none';
-
   go('game');
 
   G = {
     mode,
-    deck: makeDeck(mode==='easy' ? 8 : 21), // 8 pares (4x4) ou 21 pares (6x7)
+    deck: makeDeck(mode==='easy' ? 10 : 21), // 10 pares (4x5) ou 21 pares (6x7)
     first:null, second:null, lock:false, moves:0, pairs:0, sec:0, fastFlip:false, score:0, revealUsed:false
   };
   $('#moves').textContent='0'; $('#pairs').textContent='0'; $('#time').textContent='00:00'; $('#score').textContent='0';
   buildBoard(); startTimer(); preview((mode==='easy'? RULES_EASY : RULES).previewSeconds);
   $('#btnReveal').disabled=false; $('#btnReveal').textContent='🔍 Revelar cartas grátis 5s';
 
-  // eventos: só no modo normal
   eventsFired=0; lastEvent='';
   if(mode==='normal'){ scheduleNextEvent(true); } else { $('#gameEventFill').style.width='0%'; stopEventLoop(); }
 }
@@ -341,7 +338,7 @@ function flip(i){
     setTimeout(()=>{ 
       setHint('Você acertou, parabéns! 🎉'); 
       G.first=null; G.second=null; G.lock=false;
-      buildBoard();  // mantém visualmente viradas
+      buildBoard();
       if(G.pairs===totalPairs()) return win(); 
       setTimeout(()=>setHint('Escolha uma carta 👀'), 450); 
     }, 250);
@@ -380,13 +377,13 @@ function showEventOverlay(title, desc, onGo){
   $('#eventGo').addEventListener('click', go);
 }
 function triggerEvent(){
-  if(G.mode==='easy'){ return; } // sem eventos no modo criança
+  if(G.mode==='easy'){ return; }
   if(eventsFired>=RULES.maxPerGame){ scheduleNextEvent(); return; }
   const ev = pickEvent(); lastEvent = ev.key; eventsFired++;
   const card = $('#gameCard');
 
   switch(ev.key){
-    case 'blackout': // bloqueia durante o blackout
+    case 'blackout':
       showEventOverlay('⚠️ Blackout!', 'Tudo escurece por alguns segundos…', ()=>{
         G.lock = true;
         card.classList.add('blackout');
@@ -394,14 +391,14 @@ function triggerEvent(){
       }); 
       break;
 
-    case 'invert_board': // não bloqueia – jogador pode virar
+    case 'invert_board':
       showEventOverlay('⚠️ Mundo de cabeça pra baixo', `O tabuleiro fica invertido por ${ev.duration|0}s!`, ()=>{
         card.classList.add('inverted'); setHint('Calma! O tabuleiro está invertido 🔄');
         setTimeout(()=>{ card.classList.remove('inverted'); setHint('Escolha uma carta 👀'); scheduleNextEvent(); }, ev.duration*1000);
       }); 
       break;
 
-    case 'shuffle_unmatched': // trava só enquanto embaralha
+    case 'shuffle_unmatched':
       showEventOverlay('⚠️ Embaralhar!', 'Cartas não resolvidas trocam de lugar!', ()=>{
         G.lock = true;
         shuffleUnmatchedSafe();
@@ -412,14 +409,14 @@ function triggerEvent(){
       }); 
       break;
 
-    case 'recolor_board': // não bloqueia
+    case 'recolor_board':
       showEventOverlay('⚠️ Preto & branco', 'Tudo fica P&B por alguns segundos!', ()=>{
         card.classList.add('bw-mode');
         setTimeout(()=>{ card.classList.remove('bw-mode'); scheduleNextEvent(); }, ev.duration*1000);
       }); 
       break;
 
-    case 'reveal_partial': // não bloqueia – só mostra algumas cartas
+    case 'reveal_partial':
       showEventOverlay('⚠️ Visão Rápida', `Algumas cartas serão reveladas por ${ev.duration|0}s!`, ()=>{
         partialReveal(RULES.bonusCoverage, ev.duration);
         setTimeout(()=>{ scheduleNextEvent(); }, ev.duration*1000);
@@ -453,7 +450,7 @@ function pickUnmatchedPairs(countPairs=3) {
   });
   const completePairs = [...buckets.values()].filter(list => list.length === 2);
   for (let i = completePairs.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [completePairs[i], completePairs[j]] = [completePairs[j], completePairs[i]]; }
-  return completePairs.slice(0, countPairs).flat(); // retorna índices (2*countPairs)
+  return completePairs.slice(0, countPairs).flat();
 }
 
 /* ========= botão Revelar (5s, uma vez) — 3 pares ========= */
@@ -463,7 +460,7 @@ function revealAllOnce() {
   const btn = $('#btnReveal');
   const tiles = $('#board').children;
 
-  const showIdx = pickUnmatchedPairs(3); // 3 pares = 6 cartas
+  const showIdx = pickUnmatchedPairs(3);
 
   if (showIdx.length === 0) {
     G.revealUsed = true;
@@ -480,7 +477,6 @@ function revealAllOnce() {
     [...tiles].map((t, i) => t.classList.contains('flip') ? i : -1).filter(i => i >= 0)
   );
 
-  // Não trava o jogo durante a dica – só evita clique duplo na mesma carta
   showIdx.forEach(i => tiles[i].classList.add('flip'));
   setHint('Dica bônus! 👀');
 
@@ -521,7 +517,6 @@ window.addEventListener('load', ()=>{
     document.addEventListener('click',resume,{once:true});
   }
   syncSoundButtons();
-  // barra do lobby: preenchimento contínuo apenas visual
   let p=0; setInterval(()=>{ p=(p+1)%101; $('#lobbyEventFill').style.width=p+'%'; },120);
 });
 </script>
