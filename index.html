@@ -109,7 +109,7 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
         <small>Frutas + emojis misturados. Faça o menor tempo! ⏱️</small>
       </h1>
     </div>
-    <div class="tag">v4.1</div>
+    <div class="tag">v4.2</div>
   </header>
 
   <!-- LOBBY -->
@@ -118,7 +118,7 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
       <div class="hero">
         <div class="brand">
           <h2>🎮 Escolha o modo</h2>
-          <p>👶 <b>Modo Criança</b> (4×5, 10 pares) — um pouco mais fácil.<br>🚀 <b>Modo Normal</b> (6×7, 21 pares) — com eventos.</p>
+          <p>👶 <b>Modo Criança</b> (4×6, 12 pares) — com eventos e prévia de 5s.<br>🚀 <b>Modo Normal</b> (6×7, 21 pares) — com eventos.</p>
         </div>
         <div class="controls">
           <div class="row">
@@ -253,8 +253,17 @@ const RULES = {
   eventMin: 50, eventMax: 80, jitter: 10, cooldown: 55, maxPerGame: 4
 };
 const RULES_EASY = {
-  previewSeconds: 10, bonusRevealSeconds: 5, bonusCoverage: .40,
-  events: [], maxPerGame: 0
+  previewSeconds: 5,                // pedido: reduzir para 5s
+  bonusRevealSeconds: 5,
+  bonusCoverage: .40,
+  events: [                         // eventos também no modo criança
+    {key:'reveal_partial',    weight:35, duration:7},
+    {key:'shuffle_unmatched', weight:30, duration:0},
+    {key:'blackout',          weight:12, duration:4.5},
+    {key:'invert_board',      weight:12, duration:12},
+    {key:'recolor_board',     weight:11, duration:6}
+  ],
+  eventMin: 55, eventMax: 85, jitter: 10, cooldown: 55, maxPerGame: 4
 };
 
 /* ========= pool ========= */
@@ -279,7 +288,8 @@ function updateScore(){
 function buildBoard(){
   const b=$('#board'); b.innerHTML='';
   b.classList.remove('cols-4','cols-6');
-  b.classList.add(G.mode==='easy' ? 'cols-4' : 'cols-6');
+  // agora os dois modos usam 6 colunas; no fácil ficam 4 linhas (24 cartas)
+  b.classList.add('cols-6');
   G.deck.forEach((c,i)=>{
     const el=document.createElement('button'); el.className='tile'+(c.matched?' matched':''); el.dataset.i=i;
     const inner=document.createElement('div'); inner.className='tile-inner';
@@ -308,7 +318,7 @@ function newGame(mode='normal'){
 
   G = {
     mode,
-    deck: makeDeck(mode==='easy' ? 10 : 21), // 10 pares (4x5) ou 21 pares (6x7)
+    deck: makeDeck(mode==='easy' ? 12 : 21), // fácil: 12 pares (4x6); normal: 21 pares (6x7)
     first:null, second:null, lock:false, moves:0, pairs:0, sec:0, fastFlip:false, score:0, revealUsed:false
   };
   $('#moves').textContent='0'; $('#pairs').textContent='0'; $('#time').textContent='00:00'; $('#score').textContent='0';
@@ -316,7 +326,7 @@ function newGame(mode='normal'){
   $('#btnReveal').disabled=false; $('#btnReveal').textContent='🔍 Revelar cartas grátis 5s';
 
   eventsFired=0; lastEvent='';
-  if(mode==='normal'){ scheduleNextEvent(true); } else { $('#gameEventFill').style.width='0%'; stopEventLoop(); }
+  scheduleNextEvent(true); // agora os dois modos têm eventos
 }
 function backToLobby(){
   stopTimer(); stopEventLoop();
@@ -357,10 +367,12 @@ function win(){
 }
 
 /* ========= eventos ========= */
+function currentRules(){ return G?.mode==='easy' ? RULES_EASY : RULES; }
 function stopEventLoop(){ if(eventTimer){ clearInterval(eventTimer); eventTimer=null } }
 function scheduleNextEvent(isFirst=false){
-  const base = rand(RULES.eventMin, RULES.eventMax);
-  const t = clamp(base + rand(-RULES.jitter, RULES.jitter), RULES.eventMin-10, RULES.eventMax+10);
+  const R = currentRules();
+  const base = rand(R.eventMin, R.eventMax);
+  const t = clamp(base + rand(-R.jitter, R.jitter), R.eventMin-10, R.eventMax+10);
   eventTargetSec = t; eventElapsed = 0;
   updateEventFill(0, isFirst? '#lobbyEventFill' : '#gameEventFill');
   if(eventTimer) clearInterval(eventTimer);
@@ -368,8 +380,12 @@ function scheduleNextEvent(isFirst=false){
     updateEventFill(p, '#gameEventFill'); if(p>=100){ clearInterval(eventTimer); eventTimer=null; triggerEvent(); } }, 200);
 }
 function updateEventFill(p, sel){ const el=$(sel); if(el) el.style.width=p+'%'; }
-function pickEvent(){ const pool = RULES.events.filter(e=>e.key!==lastEvent); const sum = pool.reduce((s,e)=>s+e.weight,0);
-  let r=Math.random()*sum; for(const e of pool){ if((r-=e.weight)<=0) return e; } return pool[0]; }
+function pickEvent(){ 
+  const R = currentRules();
+  const pool = R.events.filter(e=>e.key!==lastEvent); 
+  const sum = pool.reduce((s,e)=>s+e.weight,0);
+  let r=Math.random()*sum; for(const e of pool){ if((r-=e.weight)<=0) return e; } return pool[0]; 
+}
 function showEventOverlay(title, desc, onGo){
   $('#eventTitle').textContent = title; $('#eventDesc').textContent  = desc;
   const ov = $('#eventOverlay'); ov.classList.add('show'); ov.setAttribute('aria-hidden','false');
@@ -377,8 +393,8 @@ function showEventOverlay(title, desc, onGo){
   $('#eventGo').addEventListener('click', go);
 }
 function triggerEvent(){
-  if(G.mode==='easy'){ return; }
-  if(eventsFired>=RULES.maxPerGame){ scheduleNextEvent(); return; }
+  const R = currentRules();
+  if(eventsFired>=R.maxPerGame){ scheduleNextEvent(); return; }
   const ev = pickEvent(); lastEvent = ev.key; eventsFired++;
   const card = $('#gameCard');
 
@@ -418,7 +434,7 @@ function triggerEvent(){
 
     case 'reveal_partial':
       showEventOverlay('⚠️ Visão Rápida', `Algumas cartas serão reveladas por ${ev.duration|0}s!`, ()=>{
-        partialReveal(RULES.bonusCoverage, ev.duration);
+        partialReveal(R.bonusCoverage, ev.duration);
         setTimeout(()=>{ scheduleNextEvent(); }, ev.duration*1000);
       }); 
       break;
@@ -480,6 +496,7 @@ function revealAllOnce() {
   showIdx.forEach(i => tiles[i].classList.add('flip'));
   setHint('Dica bônus! 👀');
 
+  const R = currentRules();
   setTimeout(() => {
     showIdx.forEach(i => {
       if (!alreadyOpen.has(i) && !G.deck[i].matched) {
@@ -487,7 +504,7 @@ function revealAllOnce() {
       }
     });
     setHint('Escolha uma carta 👀');
-  }, (G.mode==='easy'? RULES_EASY.bonusRevealSeconds : RULES.bonusRevealSeconds) * 1000);
+  }, R.bonusRevealSeconds * 1000);
 }
 
 /* ========= routing ========= */
