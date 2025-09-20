@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"/>
@@ -73,8 +73,9 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
 .tile.flip .tile-inner{transform:rotateY(180deg)}
 .face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;border-radius:18px}
 .face.front{background:radial-gradient(120% 120% at 20% 0%, #1d2a63, #101944 70%);border:1px solid #2f3e89}
+/* 👇 emojis maiores */
 .face.back{transform:rotateY(180deg);border:1px solid rgba(255,255,255,.25);
-  background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));font-size:clamp(28px,7vw,48px)}
+  background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));font-size:clamp(34px,8.5vw,64px)}
 
 /* event bar */
 .eventBar{height:10px;border-radius:999px;background:#17204a;border:1px solid #2a3a7a;overflow:hidden}
@@ -109,7 +110,7 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
         <small>Frutas + emojis misturados. Faça o menor tempo! ⏱️</small>
       </h1>
     </div>
-    <div class="tag">v4.4</div>
+    <div class="tag">v4.5</div>
   </header>
 
   <!-- LOBBY -->
@@ -118,7 +119,8 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
       <div class="hero">
         <div class="brand">
           <h2>🎮 Escolha o modo</h2>
-          <p>👶 <b>Modo Criança</b> (≈28 cartas, 14 pares) — eventos e <b>prévia de 10s</b>.<br>🚀 <b>Modo Normal</b> (6×7, 21 pares) — com eventos.</p>
+          <p>👶 <b>Modo Criança</b> (4×7, 14 pares) — eventos e <b>prévia de 5s</b>.<br>
+             🚀 <b>Modo Normal</b> (6×7, 21 pares) — com eventos.</p>
         </div>
         <div class="controls">
           <div class="row">
@@ -231,11 +233,11 @@ const AudioFX = {
 };
 function syncSoundButtons(){
   const t = AudioFX.soundOn ? '🔈 Som: ON' : '🔇 Som: OFF';
-  if($('#btnToggleSound')) $('#btnToggleSound').textContent=t;
-  if($('#btnToggleSoundGame')) $('#btnToggleSoundGame').textContent=t;
+  $('#btnToggleSound') && ($('#btnToggleSound').textContent=t);
+  $('#btnToggleSoundGame') && ($('#btnToggleSoundGame').textContent=t);
   const v = Math.round(AudioFX.vol*100);
-  if($('#volumeSlider')) $('#volumeSlider').value=v;
-  if($('#volumeSliderGame')) $('#volumeSliderGame').value=v;
+  $('#volumeSlider') && ($('#volumeSlider').value=v);
+  $('#volumeSliderGame') && ($('#volumeSliderGame').value=v);
 }
 
 /* ========= regras ========= */
@@ -253,18 +255,17 @@ const RULES = {
   eventMin: 50, eventMax: 80, jitter: 10, cooldown: 55, maxPerGame: 4
 };
 const RULES_EASY = {
-  previewSeconds: 10,               // ✅ pedido: Modo Criança com 10s de prévia
-  bonusRevealSeconds: 5,            // tempo que ficam abertas na dica
+  previewSeconds: 5,                 // ✅ Modo Criança com 5s
+  bonusRevealSeconds: 5,
   bonusCoverage: .40,
-  // eventos também no modo criança (mantidos)
-  events: [
+  events: [                          // eventos também no fácil
     {key:'reveal_partial',    weight:35, duration:7},
     {key:'shuffle_unmatched', weight:30, duration:0},
     {key:'blackout',          weight:12, duration:4.5},
     {key:'invert_board',      weight:12, duration:12},
     {key:'recolor_board',     weight:11, duration:6}
   ],
-  eventMin: 32, eventMax: 56, jitter: 8, cooldown: 42, maxPerGame: 5
+  eventMin: 30, eventMax: 50, jitter: 8, cooldown: 40, maxPerGame: 5
 };
 
 /* ========= pool ========= */
@@ -289,8 +290,8 @@ function updateScore(){
 function buildBoard(){
   const b=$('#board'); b.innerHTML='';
   b.classList.remove('cols-4','cols-6');
-  // usamos 6 colunas em ambos os modos; no fácil (28 cartas) haverá 5 linhas
-  b.classList.add('cols-6');
+  // ✅ grade arrumada: Criança = 4 colunas; Normal = 6 colunas
+  b.classList.add(G.mode==='easy' ? 'cols-4' : 'cols-6');
   G.deck.forEach((c,i)=>{
     const el=document.createElement('button'); el.className='tile'+(c.matched?' matched':''); el.dataset.i=i;
     const inner=document.createElement('div'); inner.className='tile-inner';
@@ -319,7 +320,7 @@ function newGame(mode='normal'){
 
   G = {
     mode,
-    deck: makeDeck(mode==='easy' ? 14 : 21), // fácil: 14 pares (≈28 cartas); normal: 21 pares (42 cartas)
+    deck: makeDeck(mode==='easy' ? 14 : 21), // fácil: 14 pares; normal: 21 pares
     first:null, second:null, lock:false, moves:0, pairs:0, sec:0, fastFlip:false, score:0, revealUsed:false
   };
   $('#moves').textContent='0'; $('#pairs').textContent='0'; $('#time').textContent='00:00'; $('#score').textContent='0';
@@ -327,7 +328,7 @@ function newGame(mode='normal'){
   $('#btnReveal').disabled=false; $('#btnReveal').textContent='🔍 Revelar cartas grátis 5s';
 
   eventsFired=0; lastEvent='';
-  scheduleNextEvent(true); // os dois modos têm eventos
+  scheduleNextEvent(true); // eventos em ambos os modos
 }
 function backToLobby(){
   stopTimer(); stopEventLoop();
@@ -477,9 +478,7 @@ function revealAllOnce() {
   const btn = $('#btnReveal');
   const tiles = $('#board').children;
 
-  // ✅ pedido garantido: 3 pares (6 cartas) no modo criança.
-  // (No normal também são 3 pares; se quiser diferente, é só me falar.)
-  const showIdx = pickUnmatchedPairs(3);
+  const showIdx = pickUnmatchedPairs(3); // 3 pares (6 cartas)
 
   if (showIdx.length === 0) {
     G.revealUsed = true;
