@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"/>
@@ -109,7 +109,7 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
         <small>Frutas + emojis misturados. Faça o menor tempo! ⏱️</small>
       </h1>
     </div>
-    <div class="tag">v4.2</div>
+    <div class="tag">v4.4</div>
   </header>
 
   <!-- LOBBY -->
@@ -118,7 +118,7 @@ h1 small{display:block;font-weight:600;color:var(--muted);font-size: clamp(12px,
       <div class="hero">
         <div class="brand">
           <h2>🎮 Escolha o modo</h2>
-          <p>👶 <b>Modo Criança</b> (4×6, 12 pares) — com eventos e prévia de 5s.<br>🚀 <b>Modo Normal</b> (6×7, 21 pares) — com eventos.</p>
+          <p>👶 <b>Modo Criança</b> (≈28 cartas, 14 pares) — eventos e <b>prévia de 10s</b>.<br>🚀 <b>Modo Normal</b> (6×7, 21 pares) — com eventos.</p>
         </div>
         <div class="controls">
           <div class="row">
@@ -253,17 +253,18 @@ const RULES = {
   eventMin: 50, eventMax: 80, jitter: 10, cooldown: 55, maxPerGame: 4
 };
 const RULES_EASY = {
-  previewSeconds: 5,                // pedido: reduzir para 5s
-  bonusRevealSeconds: 5,
+  previewSeconds: 10,               // ✅ pedido: Modo Criança com 10s de prévia
+  bonusRevealSeconds: 5,            // tempo que ficam abertas na dica
   bonusCoverage: .40,
-  events: [                         // eventos também no modo criança
+  // eventos também no modo criança (mantidos)
+  events: [
     {key:'reveal_partial',    weight:35, duration:7},
     {key:'shuffle_unmatched', weight:30, duration:0},
     {key:'blackout',          weight:12, duration:4.5},
     {key:'invert_board',      weight:12, duration:12},
     {key:'recolor_board',     weight:11, duration:6}
   ],
-  eventMin: 55, eventMax: 85, jitter: 10, cooldown: 55, maxPerGame: 4
+  eventMin: 32, eventMax: 56, jitter: 8, cooldown: 42, maxPerGame: 5
 };
 
 /* ========= pool ========= */
@@ -288,7 +289,7 @@ function updateScore(){
 function buildBoard(){
   const b=$('#board'); b.innerHTML='';
   b.classList.remove('cols-4','cols-6');
-  // agora os dois modos usam 6 colunas; no fácil ficam 4 linhas (24 cartas)
+  // usamos 6 colunas em ambos os modos; no fácil (28 cartas) haverá 5 linhas
   b.classList.add('cols-6');
   G.deck.forEach((c,i)=>{
     const el=document.createElement('button'); el.className='tile'+(c.matched?' matched':''); el.dataset.i=i;
@@ -318,7 +319,7 @@ function newGame(mode='normal'){
 
   G = {
     mode,
-    deck: makeDeck(mode==='easy' ? 12 : 21), // fácil: 12 pares (4x6); normal: 21 pares (6x7)
+    deck: makeDeck(mode==='easy' ? 14 : 21), // fácil: 14 pares (≈28 cartas); normal: 21 pares (42 cartas)
     first:null, second:null, lock:false, moves:0, pairs:0, sec:0, fastFlip:false, score:0, revealUsed:false
   };
   $('#moves').textContent='0'; $('#pairs').textContent='0'; $('#time').textContent='00:00'; $('#score').textContent='0';
@@ -326,7 +327,7 @@ function newGame(mode='normal'){
   $('#btnReveal').disabled=false; $('#btnReveal').textContent='🔍 Revelar cartas grátis 5s';
 
   eventsFired=0; lastEvent='';
-  scheduleNextEvent(true); // agora os dois modos têm eventos
+  scheduleNextEvent(true); // os dois modos têm eventos
 }
 function backToLobby(){
   stopTimer(); stopEventLoop();
@@ -476,6 +477,8 @@ function revealAllOnce() {
   const btn = $('#btnReveal');
   const tiles = $('#board').children;
 
+  // ✅ pedido garantido: 3 pares (6 cartas) no modo criança.
+  // (No normal também são 3 pares; se quiser diferente, é só me falar.)
   const showIdx = pickUnmatchedPairs(3);
 
   if (showIdx.length === 0) {
